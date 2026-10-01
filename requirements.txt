@@ -1,0 +1,9 @@
+numpy
+scipy
+numba
+matplotlib
+mujoco>=3.2
+imageio
+imageio-ffmpeg
+pillow
+pytest
