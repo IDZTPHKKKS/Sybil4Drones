@@ -99,7 +99,34 @@ python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 
 ## Results
 
-Coming soon.
+20 maps (5 per family), 8 drones of which one is compromised, forward depth camera unless
+stated. Coverage is the share of the reachable space the honest drones saw with their own
+sensors. Raw runs are in `results/`, the full table in `results/summary.md`.
+
+![Sybil results](media/fig_sybil.png)
+
+| | no defence | full defence (D3) |
+|---|---|---|
+| no attacker: coverage, time to 90% | 99.6%, 135 s | 99.4%, 161 s |
+| weak, 8 fake identities | 67.9% | 98.8% |
+| strong, 8 fake identities | 80.7% | 99.6% |
+| stealth, 8 fake identities | 92.0% | 99.5% |
+| two compromised drones, 4 fake identities each | 76.0% | 99.5% |
+
+- Damage grows with the number of fake identities and is worst in offices and tunnels, where a
+  few claimed rooms cut off whole wings (8 weak identities leave an office 37% seen).
+- Every defence level restores coverage to 99-100%; fake identities are first caught after
+  10-15 s and the strong attacker's replacement identities are caught as well. The higher levels
+  mainly remove the false map data that is left behind.
+- Hiding from honest sensors costs the attacker coverage damage but not map poisoning: the
+  stealth attack leaves only 6-8% unexplored but plants the most false cells.
+- With a 360° lidar the same strong attack leaves 2% unexplored instead of 14%, but the false
+  cells are still accepted. In one lidar run, fake free space reported under a stealth identity
+  led two honest drones into a low obstacle below the lidar's field of view.
+- No honest drone was ever revoked; honest contradiction rates on held-out maps stay below 0.5%
+  of the 2% threshold for both sensors (`results/calibration_*.json`).
+
+More maps and a quarantine defence are in progress.
 
 ## License
 

@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
 trash_runs/
-results/
+results/*.txt
 .DS_Store
+local_only/
+trash_runs/
