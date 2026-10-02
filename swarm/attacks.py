@@ -197,6 +197,10 @@ class _Sybil(Attacker):
         keep = ~self.faked[idx]
         super().receive(idx[keep], val[keep], org[keep], sender)
 
+    def witnessed(self):
+        fakes = [f.id for a in self.sim.drones if isinstance(a, _Sybil) for f in a.alive()]
+        return super().witnessed() + fakes
+
     def step(self):
         Drone.step(self)
         s = self.sim

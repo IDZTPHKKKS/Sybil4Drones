@@ -60,6 +60,8 @@ class Params:
     presence: bool = False
     presence_detect: float = 0.9
     presence_conf: float = 0.99
+    quarantine: bool = False
+    attest_quorum: int = 2
     trust_needs_body: bool = False
     trust_by_type: bool = False
     verify_free: bool = False
@@ -139,6 +141,9 @@ class Drone:
         self.beacons = {}
         self.seen = np.zeros(sim.n_ids, np.int64)
         self.absent = np.zeros(sim.n_ids, np.int64)
+        self.attest_by = {}
+        self.phys = np.zeros(sim.n_ids, np.bool_)
+        self.phys[ident] = True
         self.pos = np.array(pos, float)
         self.vel = np.zeros(3)
         self.yaw = 0.0
@@ -234,6 +239,28 @@ class Drone:
             for o in np.flatnonzero((self.absent > 0) & self.accept):
                 if o != self.id and beta.sf(0.5, 1 + self.absent[o], 1 + self.seen[o]) > s.p.presence_conf:
                     self._revoke(o, "absent", seen=int(self.seen[o]), absent=int(self.absent[o]))
+        if s.p.quarantine:
+            self._update_phys()
+
+    def witnessed(self):
+        return np.flatnonzero((self.seen > 0) & self.accept).tolist()
+
+    def _update_phys(self):
+        s = self.sim
+        votes = np.zeros(s.n_ids, np.int64)
+        for a, ids in self.attest_by.items():
+            if a != self.id and self.seen[a] > 0 and self.accept[a]:
+                votes[list(ids)] += 1
+        phys = ((self.seen > 0) | (votes >= s.p.attest_quorum)) & self.accept
+        phys[self.id] = True
+        if (phys & ~self.phys).any():
+            s.cursor[:, self.id] = 0
+        self.phys = phys
+
+    def trusted_source(self):
+        if self.sim.p.quarantine and self.honest:
+            return self.accept & self.phys
+        return self.accept
 
     def _revoke(self, o, why, **info):
         s = self.sim
@@ -269,7 +296,7 @@ class Drone:
 
     def receive(self, idx, val, org, sender):
         chg = np.empty(len(idx), np.int64)
-        m = K.apply_received(self.state, self.src, idx, val, org, self.accept, chg)
+        m = K.apply_received(self.state, self.src, idx, val, org, self.trusted_source(), chg)
         q = chg[:m]
         self._log(idx[q], val[q], org[q])
 
@@ -326,9 +353,12 @@ class Drone:
         tpos = s.world.res * F * (tc + 0.5)
         util = size[L[cand]].astype(float)
         now = s.t
+        src_ok = self.trusted_source()
         for org, (q, t0) in list(self.claims.items()):
             if now - t0 > s.p.claim_ttl:
                 del self.claims[org]
+                continue
+            if not src_ok[org]:
                 continue
             d = np.linalg.norm(tpos - q, axis=1)
             util *= np.clip(d / s.p.claim_radius, 0.0, 1.0) * 0.9 + 0.1
@@ -635,6 +665,8 @@ class Sim:
                 for org, q in di.beacon():
                     if self.rng.random() >= p.loss:
                         dj.beacons[org] = (q, self.t)
+                if p.quarantine and self.rng.random() >= p.loss:
+                    dj.attest_by[di.id] = set(di.witnessed())
                 ranges = self.pending[i][j]
                 self.pending[i][j] = []
                 left = budget

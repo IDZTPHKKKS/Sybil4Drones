@@ -36,9 +36,10 @@ D0 = dict(auth=False, defence="none")
 D1 = dict(auth=False, defence="audit")
 D2 = dict(D1, audit_vouched=True, presence=True)
 D3 = dict(D2, trust_needs_body=True, trust_by_type=True, verify_free=True)
+D4 = dict(D3, quarantine=True)
 S1 = dict(D1, auth=True)
 S3 = dict(D3, auth=True)
-DEFENCES = dict(D0=D0, D1=D1, D2=D2, D3=D3, S1=S1, S3=S3)
+DEFENCES = dict(D0=D0, D1=D1, D2=D2, D3=D3, D4=D4, S1=S1, S3=S3)
 
 
 def conditions(exp):
@@ -50,20 +51,21 @@ def conditions(exp):
         return out
     if exp == "sybil_lidar":
         L = dict(sensor="lidar")
-        out = [(f"none-{d}", dict(DEFENCES[d], **L), None) for d in ("D0", "D3")]
+        out = [(f"none-{d}", dict(DEFENCES[d], **L), None) for d in ("D0", "D3", "D4")]
         for a in ("sybil_weak", "sybil_strong", "sybil_stealth"):
-            for d in ("D0", "D3"):
+            for d in ("D0", "D3", "D4"):
                 out.append((f"{a}4-{d}", dict(DEFENCES[d], **L), (a, 1, dict(n_sybil=4))))
         return out
     if exp == "sybil":
-        out = [(f"none-{d}", DEFENCES[d], None) for d in ("D0", "D3")]
+        out = [(f"none-{d}", DEFENCES[d], None) for d in ("D0", "D3", "D4")]
         for a in ("sybil_weak", "sybil_strong", "sybil_stealth"):
             for k in (1, 2, 4, 8):
                 out.append((f"{a}{k}-D0", D0, (a, 1, dict(n_sybil=k))))
-            for d in ("D1", "D2", "D3"):
+            for d in ("D1", "D2", "D3", "D4"):
                 out.append((f"{a}4-{d}", DEFENCES[d], (a, 1, dict(n_sybil=4))))
-            out.append((f"{a}8-D3", D3, (a, 1, dict(n_sybil=8))))
-        for d in ("D0", "D3"):
+            for d in ("D3", "D4"):
+                out.append((f"{a}8-{d}", DEFENCES[d], (a, 1, dict(n_sybil=8))))
+        for d in ("D0", "D3", "D4"):
             out.append((f"2x_sybil_strong4-{d}", DEFENCES[d], ("sybil_strong", 2, dict(n_sybil=4))))
         return out
     if exp == "scaling":
