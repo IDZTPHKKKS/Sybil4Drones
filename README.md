@@ -47,6 +47,7 @@ frontier they are heading for so the others spread out.
 | D1 | first-hand audit of received map data, Beta trust per identity, revocation and roll-back |
 | D2 | only vouched identities can corroborate a claim; presence check (is there a drone where an identity says it is?) |
 | D3 | trust requires being seen in person; wall claims judged separately; drones visit areas reported by identities they cannot vouch for |
+| D4 | quarantine: map data and claims are used only from identities seen in person or vouched for by two drones that were |
 | signed | message signatures: fake identities are impossible |
 
 ## Install
@@ -123,10 +124,10 @@ sensors. Raw runs are in `results/`, the full table in `results/summary.md`.
 - With a 360° lidar the same strong attack leaves 2% unexplored instead of 14%, but the false
   cells are still accepted. In one lidar run, fake free space reported under a stealth identity
   led two honest drones into a low obstacle below the lidar's field of view.
-- No honest drone was ever revoked; honest contradiction rates on held-out maps stay below 0.5%
-  of the 2% threshold for both sensors (`results/calibration_*.json`).
+- No honest drone was ever revoked. On held-out maps the worst honest contradiction rate is
+  0.04% overall and 0.43% for walls, against a 2% threshold (`results/calibration_*.json`).
 
-More maps and a quarantine defence are in progress.
+Runs on all 40 maps and with the quarantine defence (D4) are in progress.
 
 ## License
 

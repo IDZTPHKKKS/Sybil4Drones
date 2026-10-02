@@ -234,7 +234,7 @@ def fig_sybil(runs, table, lidar=None):
     ax.set_title("Damage vs number of fake identities", fontsize=9)
     ax.legend(fontsize=7)
     ax = axes[2]
-    levels = ("D0", "D1", "D2", "D3")
+    levels = ("D0", "D1", "D2", "D3", "D4")
     xs = np.arange(len(levels))
     for j, (a, col, lab) in enumerate(SYB):
         vals, errs = [], []
@@ -245,7 +245,7 @@ def fig_sybil(runs, table, lidar=None):
         ax.bar(xs + (j - 1) * 0.27, vals, 0.25, yerr=errs, color=col, label=lab, error_kw=dict(lw=0.8))
     if base:
         ax.axhline(100 - np.mean(base), color=OI[0], lw=0.8, ls=":")
-    ax.set_xticks(xs), ax.set_xticklabels(["none", "audit", "+vouch\n+presence", "+body+walls\n+check areas"], fontsize=7)
+    ax.set_xticks(xs), ax.set_xticklabels(["none", "audit", "+vouch\n+presence", "+body+walls\n+check areas", "+quarantine"], fontsize=7)
     ax.set_ylabel("space seen by honest drones [%]"), ax.set_ylim(0, 102)
     ax.set_title("4 fake identities: which defence stops them", fontsize=9)
     ax.legend(fontsize=7, loc="lower right")
@@ -274,9 +274,9 @@ def fig_sybil(runs, table, lidar=None):
     table.append("## Sybil attack (camera, 8 real drones, 1 compromised)\n")
     table.append("'Seen' = space the honest drones observed with their own sensors. 'Fake identities caught' counts every identity used, including replacements.\n")
     table += head
-    order = ["none-D0", "none-D3"] + [f"{a}{k}-D0" for a, _, _ in SYB for k in ks] + \
-            [f"{a}{k}-{d}" for a, _, _ in SYB for k, d in ((4, "D1"), (4, "D2"), (4, "D3"), (8, "D3"))] + \
-            ["2x_sybil_strong4-D0", "2x_sybil_strong4-D3"]
+    order = ["none-D0", "none-D3", "none-D4"] + [f"{a}{k}-D0" for a, _, _ in SYB for k in ks] + \
+            [f"{a}{k}-{d}" for a, _, _ in SYB for k, d in ((4, "D1"), (4, "D2"), (4, "D3"), (4, "D4"), (8, "D3"), (8, "D4"))] + \
+            ["2x_sybil_strong4-D0", "2x_sybil_strong4-D3", "2x_sybil_strong4-D4"]
     for c in order:
         if runs.get(c):
             table.append(row(c, runs[c]))
@@ -285,7 +285,7 @@ def fig_sybil(runs, table, lidar=None):
         table.append("## Camera vs LiDAR (4 fake identities)\n")
         table.append("| condition | camera: seen | LiDAR: seen | camera: wrong cells | LiDAR: wrong cells |")
         table.append("|---|---|---|---|---|")
-        for c in ["none-D0", "none-D3"] + [f"{a}4-{d}" for a, _, _ in SYB for d in ("D0", "D3")]:
+        for c in ["none-D0", "none-D3", "none-D4"] + [f"{a}4-{d}" for a, _, _ in SYB for d in ("D0", "D3", "D4")]:
             cam, lid = runs.get(c, []), lidar.get(c, [])
             if cam and lid:
                 f = lambda rs, k: np.mean([r[k][-1] for r in rs])
