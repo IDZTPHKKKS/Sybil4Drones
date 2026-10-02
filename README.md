@@ -82,7 +82,7 @@ Experiments and figures:
 python3 scripts/calibrate_trust.py                # honest contradiction rates on held-out maps
 python3 scripts/run.py sybil --seeds 0 1 2 3 4    # one JSON per run in results/, resumable
 python3 scripts/run.py sybil_lidar --seeds 0 1 2 3 4
-python3 scripts/plot.py                           # media/fig_*.png, results/summary.md
+python3 scripts/figures.py                        # media/fig_*.png and .pdf
 python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 ```
 
@@ -100,34 +100,46 @@ python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 
 ## Results
 
-20 maps (5 per family), 8 drones of which one is compromised, forward depth camera unless
-stated. Coverage is the share of the reachable space the honest drones saw with their own
-sensors. Raw runs are in `results/`, the full table in `results/summary.md`.
+20 maps (5 per family), 8 drones with one compromised, depth camera unless noted. "Explored" is
+the share of the reachable space seen by the honest drones' own sensors; "false cells" is the
+median number of cells per honest map that contradict the true world. Raw runs are in
+`results/`, figures are made with `scripts/figures.py`.
 
-![Sybil results](media/fig_sybil.png)
+![Exploration over time](media/fig_coverage_time.png)
 
-| | no defence | full defence (D3) |
-|---|---|---|
-| no attacker: coverage, time to 90% | 99.6%, 135 s | 99.4%, 161 s |
-| weak, 8 fake identities | 67.9% | 98.8% |
-| strong, 8 fake identities | 80.7% | 99.6% |
-| stealth, 8 fake identities | 92.0% | 99.5% |
-| two compromised drones, 4 fake identities each | 76.0% | 99.5% |
+Exploration over time with 4 fake identities, median and interquartile range over maps.
 
-- Damage grows with the number of fake identities and is worst in offices and tunnels, where a
-  few claimed rooms cut off whole wings (8 weak identities leave an office 37% seen).
-- Every defence level restores coverage to 99-100%; fake identities are first caught after
-  10-15 s and the strong attacker's replacement identities are caught as well. The higher levels
-  mainly remove the false map data that is left behind.
-- Hiding from honest sensors costs the attacker coverage damage but not map poisoning: the
-  stealth attack leaves only 6-8% unexplored but plants the most false cells.
-- With a 360° lidar the same strong attack leaves 2% unexplored instead of 14%, but the false
-  cells are still accepted. In one lidar run, fake free space reported under a stealth identity
-  led two honest drones into a low obstacle below the lidar's field of view.
-- No honest drone was ever revoked. On held-out maps the worst honest contradiction rate is
-  0.04% overall and 0.43% for walls, against a 2% threshold (`results/calibration_*.json`).
+![Damage vs number of fake identities](media/fig_damage.png)
 
-Runs on all 40 maps and with the quarantine defence (D4) are in progress.
+Unexplored space without defence as the number of fake identities grows (mean, 95% interval).
+
+![Defence levels](media/fig_defences.png)
+
+Explored space and false map data for 4 fake identities at each defence level.
+
+| attack | none | D3 | D4 |
+|---|---|---|---|
+| no attacker | 99.6% / 63 | 99.4% / 63 | 99.4% / 56 |
+| weak, 8 identities | 67.9% / 38244 | 98.8% / 67 | 99.1% / 61 |
+| strong, 8 identities | 80.7% / 24229 | 99.6% / 1183 | 99.1% / 83 |
+| stealth, 8 identities | 92.0% / 21900 | 99.5% / 1602 | 99.6% / 55 |
+| 2 compromised drones, 4 identities each | 76.0% / 34553 | 99.5% / 2543 | 99.5% / 2718 |
+
+Explored / false cells. Time to 90% explored without an attacker: 135 s with no defence, 161 s
+with D3, 156 s with D4.
+
+| attack, 4 identities | camera, none | lidar, none | camera, D3 | lidar, D3 |
+|---|---|---|---|---|
+| weak | 77.8% / 22074 | 98.4% / 7498 | 98.7% / 58 | 99.9% / 0 |
+| strong | 85.8% / 17520 | 97.7% / 9746 | 99.6% / 1848 | 99.9% / 1675 |
+| stealth | 93.9% / 16536 | 99.6% / 5481 | 99.6% / 1777 | 99.9% / 2062 |
+
+No honest drone was revoked in any run. On held-out maps the largest honest contradiction rate
+is 0.04% (0.43% for wall claims) against a 2% threshold. Two colluding drones can vouch for each
+other's fake identities, which D4 does not prevent. In one lidar run, free space reported by a
+stealth identity led two honest drones into an obstacle below the lidar's field of view.
+
+Runs on all 40 maps are in progress.
 
 ## License
 
