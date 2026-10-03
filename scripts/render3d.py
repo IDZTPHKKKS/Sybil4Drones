@@ -54,7 +54,7 @@ def frame(sc, r, cam, label):
 
 
 def main(family="office", seed=0, attack="sybil_strong", fakes=4, left="D0", right="D3", t_end=600.0):
-    names = {"D0": "no defence", "D1": "audit", "D2": "audit + presence", "D3": "full defence"}
+    names = {"D0": "no defence", "D1": "audit", "D2": "audit + presence", "D3": "full defence", "D4": "full defence + quarantine"}
     sims = [make(family, seed, attack, fakes, d) for d in (left, right)]
     scenes = [Scene3D(s) for s in sims]
     rens = [mujoco.Renderer(sc.model, H, W, max_geom=100000) for sc in scenes]

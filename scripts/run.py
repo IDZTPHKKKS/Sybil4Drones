@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run an experiment over many maps; one JSON file per run, existing runs are skipped (resumable).
 
-    python3 scripts/run.py sybil        # weak and strong Sybil attacks vs defence levels D0-D3, signed S1/S3
+    python3 scripts/run.py sybil        # weak, strong and stealth Sybil attacks vs defence levels D0-D4
     python3 scripts/run.py network      # packet dropping attackers (blackhole, greyhole), usual vs secure
     python3 scripts/run.py attacks      # one compromised drone of 8, every attack, vanilla vs secure
     python3 scripts/run.py stealth      # fake-wall injection rate vs damage and detection

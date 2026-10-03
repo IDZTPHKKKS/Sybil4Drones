@@ -10,7 +10,7 @@ sensors.
 
 *Office map, 8 drones, one of them compromised and running 4 fake identities at a time.
 Red blocks are walls that do not exist. Left: no defence, the team stops with 60% of the office
-seen. Right: full defence, 13 fake identities caught and replaced, 100% seen.
+seen. Right: full defence, fake identities are revoked and the attacker replaces them 9 times, 100% seen.
 [Full video](media/sybil_demo.mp4)*
 
 ## What is simulated
@@ -198,7 +198,8 @@ Time to 90% explored without an attacker: 134 s with no defence, 153 s with D3, 
 | strong | 90.3% / 18726 | 99.7% / 4776 | 99.9% / 3465 | 99.7% / 1816 | 99.7% / 61 |
 | stealth | 95.2% / 16234 | 99.8% / 3002 | 99.7% / 3686 | 99.8% / 1143 | 99.8% / 63 |
 
-Across all 1,440 runs, no honest drone was revoked. On the held-out maps, honest contradiction rates remained very low: at most 0.04%, increasing to 0.43% when wall claims were included, compared with the 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
+Across all 1,440 runs, no honest drone was revoked. On the held-out maps, honest contradiction rates remained very low: at most 0.04% (0.43% for wall claims alone), against a 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
+
 ## License
 
 MIT

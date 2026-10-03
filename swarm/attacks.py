@@ -320,11 +320,6 @@ class SybilWeak(_Sybil):
 
 class SybilStrong(_Sybil):
     hide = False
-    """Non-simultaneous identities built to pass the content audit:
-    - they join one at a time just after launch, near the attacker;
-    - their scans are consistent: each fake drone reports the walls of one plausible virtual room;
-    - they build trust: true map data the attacker passes on goes out under their names;
-    - when one is revoked, a new identity replaces it."""
     strong = True
     relabel = 0.8
     spawn_every = 4.0
