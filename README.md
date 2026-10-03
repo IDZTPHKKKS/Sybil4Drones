@@ -81,9 +81,73 @@ Experiments:
 ```bash
 python3 scripts/calibrate_trust.py                          # honest contradiction rates on held-out maps
 python3 scripts/run.py sybil --seeds 0 1 2 3 4 5 6 7 8 9    # one JSON per run in results/, resumable
-python3 scripts/run.py sybil_lidar --seeds 0 1 2 3 4 5 6 7 8 9
 python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 ```
+
+## Extending
+
+Watch any setup without writing code:
+
+```bash
+mjpython scripts/view3d.py warehouse 2 sybil_strong --drones 12 --fakes 6 --defence D4 --speed 3
+```
+
+`--drones` is the team size, `--fakes` the number of fake identities active at a time,
+`--defence` one of D0-D4, `--sensor` camera or lidar. The last drone of the team is the
+compromised one.
+
+For batches, add an experiment to `conditions()` in `scripts/run.py`. Each condition is
+`(name, parameter overrides, attack)`, where the attack is `(name, compromised drones, settings)`
+or `None`:
+
+```python
+if exp == "team":
+    out = []
+    for n in (4, 8, 12):
+        out.append((f"n{n}-none-D0", dict(n_drones=n), None))
+        for d in ("D0", "D4"):
+            out.append((f"n{n}-strong4-{d}", dict(DEFENCES[d], n_drones=n),
+                        ("sybil_strong", 1, dict(n_sybil=4))))
+    out.append(("2att-strong6-D4", dict(D4), ("sybil_strong", 2, dict(n_sybil=6, spawn_every=2.0))))
+    return out
+```
+
+```bash
+python3 scripts/run.py team --families office warehouse --seeds 0 1 2
+```
+
+Results go to `results/team/`, one JSON per run, with the time series of every metric.
+
+Team and environment (`Params` in `swarm/sim.py`):
+
+| parameter | default | |
+|---|---|---|
+| `n_drones` | 8 | team size |
+| `sensor` | `"camera"` | `"camera"` or `"lidar"` |
+| `max_range`, `hfov`, `vfov` | 6 m, 90°, 60° | depth camera |
+| `lidar_range` | 30 m | lidar |
+| `v_max` | 1.5 m/s | flight speed |
+| `comm_range` | 25 m | radio range |
+| `loss` | 0 | packet loss rate |
+| `t_max` | 600 s | mission length (set in `scripts/run.py`) |
+| `claim_radius` | 6 m | frontier claim radius |
+
+Attack settings (class attributes in `swarm/attacks.py`, passed as the third element of the
+attack):
+
+| setting | default | |
+|---|---|---|
+| `n_sybil` | 4 | fake identities active at a time |
+| `speed` | 1.2 m/s | fake identity speed |
+| `first_spawn` | 8 s | first fake identity (strong, stealth) |
+| `spawn_every` | 4 s | gap between new identities (strong, stealth) |
+| `relabel` | 0.8 | share of relayed real data sent under fake names (strong, stealth) |
+
+Defence switches are in the same `Params` (`audit_vouched`, `presence`, `trust_needs_body`,
+`trust_by_type`, `verify_free`, `quarantine`, `attest_quorum`); D0-D4 in `scripts/run.py` are
+combinations of them. A new attack is a subclass of `_Sybil` (or `Attacker`) in
+`swarm/attacks.py` added to `ATTACKS`; for a Sybil variant, `_lengths` sets what each fake scan
+reports. A new world family is a function in `swarm/worlds.py` added to `FAMILIES` and `make`.
 
 ## Layout
 
@@ -99,7 +163,7 @@ python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 
 ## Results
 
-40 maps (10 per family), 8 drones with one compromised, depth camera unless noted. "Explored" is
+40 maps (10 per family), 8 drones with one compromised, depth camera. "Explored" is
 the share of the reachable space seen by the honest drones' own sensors (mean over maps); "false
 cells" is the median number of cells per honest map that contradict the true world. Raw runs are
 in `results/`.
@@ -126,17 +190,17 @@ Explored / false cells by defence level:
 
 Time to 90% explored without an attacker: 134 s with no defence, 153 s with D3, 155 s with D4.
 
-Camera and lidar, 4 fake identities, explored / false cells:
+4 fake identities, explored / false cells by defence level:
 
-| attack | camera, none | lidar, none | camera, D3 | lidar, D3 | camera, D4 | lidar, D4 |
-|---|---|---|---|---|---|---|
-| weak | 81.3% / 24208 | 98.9% / 7113 | 99.3% / 58 | 99.9% / 0 | 99.8% / 56 | 99.9% / 0 |
-| strong | 90.3% / 18726 | 96.8% / 9746 | 99.7% / 1816 | 99.9% / 1738 | 99.7% / 61 | 99.9% / 0 |
-| stealth | 95.2% / 16234 | 99.7% / 4574 | 99.8% / 1143 | 99.9% / 1613 | 99.8% / 63 | 100.0% / 0 |
+| attack | none | D1 | D2 | D3 | D4 |
+|---|---|---|---|---|---|
+| weak | 81.3% / 24208 | 99.4% / 60 | 99.2% / 57 | 99.3% / 58 | 99.8% / 56 |
+| strong | 90.3% / 18726 | 99.7% / 4776 | 99.9% / 3465 | 99.7% / 1816 | 99.7% / 61 |
+| stealth | 95.2% / 16234 | 99.8% / 3002 | 99.7% / 3686 | 99.8% / 1143 | 99.8% / 63 |
 
-No honest drone was revoked in any of the 1,920 runs. On held-out maps the largest honest
+No honest drone was revoked in any of the 1,440 runs. On held-out maps the largest honest
 contradiction rate is 0.04% (0.43% for wall claims) against a 2% threshold. Two colluding drones
-can vouch for each other's fake identities, which D4 does not prevent. 
+can vouch for each other's fake identities, which D4 does not prevent.
 ## License
 
 MIT
