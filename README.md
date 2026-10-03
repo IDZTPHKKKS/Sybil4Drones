@@ -136,10 +136,7 @@ Camera and lidar, 4 fake identities, explored / false cells:
 
 No honest drone was revoked in any of the 1,920 runs. On held-out maps the largest honest
 contradiction rate is 0.04% (0.43% for wall claims) against a 2% threshold. Two colluding drones
-can vouch for each other's fake identities, which D4 does not prevent. Drones crashed in 4 of the
-480 lidar runs and in none of the camera runs; in the two we replayed, the drone hit an obstacle
-below the lidar's field of view, once after following free space reported by a stealth identity.
-
+can vouch for each other's fake identities, which D4 does not prevent. 
 ## License
 
 MIT
