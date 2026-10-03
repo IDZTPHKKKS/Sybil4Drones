@@ -76,13 +76,12 @@ mjpython scripts/show_world3d.py warehouse 3      # N / P: next / previous seed,
 python3 scripts/show_worlds.py 0 9                # top views -> media/worlds_0-9.png
 ```
 
-Experiments and figures:
+Experiments:
 
 ```bash
-python3 scripts/calibrate_trust.py                # honest contradiction rates on held-out maps
-python3 scripts/run.py sybil --seeds 0 1 2 3 4    # one JSON per run in results/, resumable
-python3 scripts/run.py sybil_lidar --seeds 0 1 2 3 4
-python3 scripts/figures.py                        # media/fig_*.png and .pdf
+python3 scripts/calibrate_trust.py                          # honest contradiction rates on held-out maps
+python3 scripts/run.py sybil --seeds 0 1 2 3 4 5 6 7 8 9    # one JSON per run in results/, resumable
+python3 scripts/run.py sybil_lidar --seeds 0 1 2 3 4 5 6 7 8 9
 python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 ```
 
@@ -95,51 +94,51 @@ python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 | `swarm/sim.py` | drones, radio, coordination, defences, metrics |
 | `swarm/attacks.py` | attackers |
 | `swarm/scene3d.py`, `swarm/viz.py` | 3D and top-down views |
-| `scripts/` | viewers, experiment runner, calibration, figures, video |
+| `scripts/` | viewers, experiment runner, calibration, video |
 | `tests/` | unit and integration tests |
 
 ## Results
 
-20 maps (5 per family), 8 drones with one compromised, depth camera unless noted. "Explored" is
-the share of the reachable space seen by the honest drones' own sensors; "false cells" is the
-median number of cells per honest map that contradict the true world. Raw runs are in
-`results/`, figures are made with `scripts/figures.py`.
+40 maps (10 per family), 8 drones with one compromised, depth camera unless noted. "Explored" is
+the share of the reachable space seen by the honest drones' own sensors (mean over maps); "false
+cells" is the median number of cells per honest map that contradict the true world. Raw runs are
+in `results/`.
 
-![Exploration over time](media/fig_coverage_time.png)
+Explored space without any defence, by number of fake identities:
 
-Exploration over time with 4 fake identities, median and interquartile range over maps.
+| attack | 1 | 2 | 4 | 8 |
+|---|---|---|---|---|
+| weak | 92.7% | 87.0% | 81.3% | 75.1% |
+| strong | 97.2% | 97.2% | 90.3% | 86.1% |
+| stealth | 98.1% | 96.6% | 95.2% | 91.4% |
 
-![Damage vs number of fake identities](media/fig_damage.png)
+Without an attacker the team explores 99.8%.
 
-Unexplored space without defence as the number of fake identities grows (mean, 95% interval).
-
-![Defence levels](media/fig_defences.png)
-
-Explored space and false map data for 4 fake identities at each defence level.
+Explored / false cells by defence level:
 
 | attack | none | D3 | D4 |
 |---|---|---|---|
-| no attacker | 99.6% / 63 | 99.4% / 63 | 99.4% / 56 |
-| weak, 8 identities | 67.9% / 38244 | 98.8% / 67 | 99.1% / 61 |
-| strong, 8 identities | 80.7% / 24229 | 99.6% / 1183 | 99.1% / 83 |
-| stealth, 8 identities | 92.0% / 21900 | 99.5% / 1602 | 99.6% / 55 |
-| 2 compromised drones, 4 identities each | 76.0% / 34553 | 99.5% / 2543 | 99.5% / 2718 |
+| no attacker | 99.8% / 62 | 99.7% / 63 | 99.7% / 58 |
+| weak, 8 identities | 75.1% / 30828 | 99.4% / 68 | 99.5% / 58 |
+| strong, 8 identities | 86.1% / 26661 | 99.8% / 1618 | 99.5% / 64 |
+| stealth, 8 identities | 91.4% / 24058 | 99.7% / 1373 | 99.8% / 61 |
+| 2 compromised drones, 4 identities each | 76.3% / 35486 | 99.7% / 1831 | 99.7% / 1386 |
 
-Explored / false cells. Time to 90% explored without an attacker: 135 s with no defence, 161 s
-with D3, 156 s with D4.
+Time to 90% explored without an attacker: 134 s with no defence, 153 s with D3, 155 s with D4.
 
-| attack, 4 identities | camera, none | lidar, none | camera, D3 | lidar, D3 |
-|---|---|---|---|---|
-| weak | 77.8% / 22074 | 98.4% / 7498 | 98.7% / 58 | 99.9% / 0 |
-| strong | 85.8% / 17520 | 97.7% / 9746 | 99.6% / 1848 | 99.9% / 1675 |
-| stealth | 93.9% / 16536 | 99.6% / 5481 | 99.6% / 1777 | 99.9% / 2062 |
+Camera and lidar, 4 fake identities, explored / false cells:
 
-No honest drone was revoked in any run. On held-out maps the largest honest contradiction rate
-is 0.04% (0.43% for wall claims) against a 2% threshold. Two colluding drones can vouch for each
-other's fake identities, which D4 does not prevent. In one lidar run, free space reported by a
-stealth identity led two honest drones into an obstacle below the lidar's field of view.
+| attack | camera, none | lidar, none | camera, D3 | lidar, D3 | camera, D4 | lidar, D4 |
+|---|---|---|---|---|---|---|
+| weak | 81.3% / 24208 | 98.9% / 7113 | 99.3% / 58 | 99.9% / 0 | 99.8% / 56 | 99.9% / 0 |
+| strong | 90.3% / 18726 | 96.8% / 9746 | 99.7% / 1816 | 99.9% / 1738 | 99.7% / 61 | 99.9% / 0 |
+| stealth | 95.2% / 16234 | 99.7% / 4574 | 99.8% / 1143 | 99.9% / 1613 | 99.8% / 63 | 100.0% / 0 |
 
-Runs on all 40 maps are in progress.
+No honest drone was revoked in any of the 1,920 runs. On held-out maps the largest honest
+contradiction rate is 0.04% (0.43% for wall claims) against a 2% threshold. Two colluding drones
+can vouch for each other's fake identities, which D4 does not prevent. Drones crashed in 4 of the
+480 lidar runs and in none of the camera runs; in the two we replayed, the drone hit an obstacle
+below the lidar's field of view, once after following free space reported by a stealth identity.
 
 ## License
 
