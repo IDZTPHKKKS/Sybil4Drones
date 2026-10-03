@@ -1,4 +1,4 @@
-# Sybil attacks on multi-drone 3D mapping
+# Sybil attacks on multi-drone 3D mapping of indoor and confined spaces
 
 A team of drones explores an unknown building, tunnel network, warehouse or forest and builds a
 shared 3D voxel map. One compromised drone creates fake identities that fly, scan and claim
