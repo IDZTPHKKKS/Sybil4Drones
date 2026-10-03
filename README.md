@@ -200,6 +200,11 @@ Time to 90% explored without an attacker: 134 s with no defence, 153 s with D3, 
 
 Across all 1,440 runs, no honest drone was revoked. On the held-out maps, honest contradiction rates remained very low: at most 0.04% (0.43% for wall claims alone), against a 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
 
+## Contributing
+
+Issues and pull requests are welcome: new attacks, defences, worlds, or fixes. If you want to
+build on this for a project or paper, open an issue and we can talk about it.
+
 ## License
 
 MIT
