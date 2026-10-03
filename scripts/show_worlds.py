@@ -28,7 +28,7 @@ def main(seeds=(0, 1, 2)):
             ax = axes[i, j]
             ax.imshow(img.T, origin="lower", cmap="Greys", extent=[0, w.size[0], 0, w.size[1]], vmin=0, vmax=1)
             ax.plot(w.starts[:16, 0], w.starts[:16, 1], ".", color="tab:red", ms=3)
-            ax.set_title(f"{f}, seed {s}  ({occ.mean() * 100:.0f}% occupied)", fontsize=9)
+            ax.set_title(f"{f}, seed {s}", fontsize=9)
             ax.set_xticks([]), ax.set_yticks([])
             assert not w.occ[tuple((w.starts / w.res).astype(int).T)].any(), "start inside obstacle"
     fig.tight_layout()
