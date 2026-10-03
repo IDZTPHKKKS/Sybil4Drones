@@ -86,7 +86,7 @@ python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 
 ## Extending
 
-Watch any setup without writing code:
+Watch any setup in action:
 
 ```bash
 mjpython scripts/view3d.py warehouse 2 sybil_strong --drones 12 --fakes 6 --defence D4 --speed 3
@@ -198,9 +198,7 @@ Time to 90% explored without an attacker: 134 s with no defence, 153 s with D3, 
 | strong | 90.3% / 18726 | 99.7% / 4776 | 99.9% / 3465 | 99.7% / 1816 | 99.7% / 61 |
 | stealth | 95.2% / 16234 | 99.8% / 3002 | 99.7% / 3686 | 99.8% / 1143 | 99.8% / 63 |
 
-No honest drone was revoked in any of the 1,440 runs. On held-out maps the largest honest
-contradiction rate is 0.04% (0.43% for wall claims) against a 2% threshold. Two colluding drones
-can vouch for each other's fake identities, which D4 does not prevent.
+Across all 1,440 runs, no honest drone was revoked. On the held-out maps, honest contradiction rates remained very low: at most 0.04%, increasing to 0.43% when wall claims were included, compared with the 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
 ## License
 
 MIT
