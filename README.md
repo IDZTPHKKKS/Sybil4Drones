@@ -202,8 +202,9 @@ Across all 1,440 runs, no honest drone was revoked. On the held-out maps, honest
 
 ## Contributing
 
-Issues and pull requests are welcome: new attacks, defences, worlds, or fixes. If you want to
-build on this for a project or paper, open an issue and we can talk about it.
+Contributions are welcome. Please open an issue to report a bug or propose a new attack, defence
+or world, and submit changes as a pull request. If you use this code in your research, please
+cite this repository.
 
 ## License
 
