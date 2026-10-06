@@ -2,9 +2,12 @@
 from dataclasses import dataclass
 
 import numpy as np
+from scipy import ndimage
 
 RES = 0.2
 FAMILIES = ("office", "warehouse", "forest", "tunnels")
+EXTRA_FAMILIES = ("multistorey", "atrium", "cave")
+ALL_FAMILIES = FAMILIES + EXTRA_FAMILIES
 
 
 @dataclass
@@ -238,6 +241,118 @@ def tunnels(seed):
     return g.occ, _starts(1.0, 12.0, 20.0, 1.5)
 
 
+def multistorey(seed, floors=3):
+    rng = np.random.default_rng(seed)
+    levels = [office(int(rng.integers(1 << 30))) for _ in range(floors)]
+    starts = levels[0][1]
+    occ = np.concatenate([lv[0] for lv in levels], axis=2)
+    nz = levels[0][0].shape[2]
+    side = int(round(2.0 / RES))
+    for f in range(floors - 1):
+        below = ~occ[:, :, f * nz + 1:(f + 1) * nz - 1].any(2)
+        above = ~occ[:, :, (f + 1) * nz + 1:(f + 2) * nz - 1].any(2)
+        fits = ndimage.binary_erosion(below & above, np.ones((side, side), bool))
+        fits[:int(6.0 / RES)] = False
+        cand = np.argwhere(fits)
+        picks = []
+        for _ in range(2):
+            if len(cand) == 0:
+                break
+            c = cand[rng.integers(len(cand))]
+            picks.append(c)
+            cand = cand[np.abs(cand - c).max(1) > int(8.0 / RES)]
+        while len(picks) < 2:
+            picks.append(np.array([rng.integers(int(8 / RES), occ.shape[0] - side), rng.integers(side, occ.shape[1] - side)]))
+        for ci, cj in picks:
+            i0, j0 = ci - side // 2, cj - side // 2
+            occ[i0:i0 + side, j0:j0 + side, f * nz + 1:(f + 2) * nz - 1] = False
+    return occ, starts
+
+
+def atrium(seed, floors=3):
+    rng = np.random.default_rng(seed)
+    L, W, fh = 48.0, 32.0, 3.6
+    H = floors * fh
+    g = _Grid(L, W, H)
+    vx0, vx1 = rng.uniform(15.0, 18.0), rng.uniform(30.0, 34.0)
+    vy0, vy1 = rng.uniform(10.0, 12.0), rng.uniform(20.0, 22.0)
+    for f in range(1, floors):
+        z = f * fh
+        g.box(0, 0, z - 0.1, L, W, z + 0.1)
+        g.box(vx0, vy0, z - 0.1, vx1, vy1, z + 0.1, value=False)
+        for x0, y0, x1, y1 in ((vx0, vy0 - 0.1, vx1, vy0), (vx0, vy1, vx1, vy1 + 0.1),
+                               (vx0 - 0.1, vy0, vx0, vy1), (vx1, vy0, vx1 + 0.1, vy1)):
+            g.box(x0, y0, z + 0.1, x1, y1, z + 1.1)
+    for px in (vx0 - 1.0, vx1 + 1.0):
+        for py in (vy0 - 1.0, vy1 + 1.0):
+            g.box(px - 0.25, py - 0.25, 0, px + 0.25, py + 0.25, H)
+    x_start = 7.0
+    for f in range(floors):
+        z0, z1 = f * fh + 0.2, (f + 1) * fh - 0.2
+        for side in (0, 1):
+            d = rng.uniform(5.0, 7.0)
+            ya, yb, front = (0.0, d, d) if side == 0 else (W - d, W, W - d)
+            g.box(x_start, front - 0.1, z0, L, front + 0.1, z1)
+            x = x_start
+            while x < L - 3.0:
+                x1 = min(x + rng.uniform(4.0, 7.0), L)
+                g.box(x1 - 0.1, ya, z0, x1 + 0.1, yb, z1)
+                dx = rng.uniform(x + 0.5, max(x + 0.6, x1 - 2.3))
+                g.box(dx, front - 0.2, z0, dx + 1.8, front + 0.2, z0 + 2.4, value=False)
+                for _ in range(rng.integers(1, 4)):
+                    sx = rng.uniform(x + 0.4, max(x + 0.5, x1 - 1.4))
+                    sy = rng.uniform(ya + 0.4, max(ya + 0.5, yb - 1.0))
+                    g.box(sx, sy, z0, sx + rng.uniform(0.6, 1.2), sy + rng.uniform(0.4, 0.8), z0 + rng.uniform(0.8, 2.0))
+                x = x1
+        for _ in range(rng.integers(2, 5)):
+            kx, ky = rng.uniform(x_start, L - 3.0), rng.uniform(8.0, W - 9.0)
+            if f > 0 and vx0 - 1.0 < kx < vx1 + 1.0 and vy0 - 1.0 < ky < vy1 + 1.0:
+                continue
+            g.box(kx, ky, z0, kx + rng.uniform(1.0, 2.0), ky + rng.uniform(0.8, 1.5), z0 + rng.uniform(0.6, 1.1))
+    g.box(0.8, 11.0, 0, 5.5, 21.0, fh - 0.1, value=False)
+    g.shell()
+    return g.occ, _starts(1.0, 12.0, 20.0, 1.5)
+
+
+def cave(seed):
+    rng = np.random.default_rng(seed)
+    L, W, H = 48.0, 32.0, 8.0
+    g = _Grid(L, W, H)
+    shape = g.occ.shape
+    field = ndimage.gaussian_filter(rng.standard_normal(shape), sigma=(9, 9, 5))
+    field /= field.std()
+    z = (np.arange(shape[2]) + 0.5) * RES
+    field += 0.9 * ((z - H / 2) / (H / 2))[None, None, :] ** 4
+    free = field < -0.35
+    p = np.array([3.0, W / 2, 1.6])
+    d = np.array([1.0, 0.0, 0.0])
+    xs = (np.arange(shape[0]) + 0.5) * RES
+    ys = (np.arange(shape[1]) + 0.5) * RES
+    while p[0] < L - 3.0:
+        d = d + rng.normal(0, 0.35, 3) * np.array([0.3, 1.0, 0.4])
+        d[0] = max(d[0], 0.4)
+        d /= np.linalg.norm(d)
+        p = p + 0.6 * d
+        p[1] = np.clip(p[1], 3.0, W - 3.0)
+        p[2] = np.clip(p[2], 1.4, H - 1.6)
+        r = rng.uniform(1.1, 1.8)
+        i0, i1 = np.searchsorted(xs, [p[0] - r, p[0] + r])
+        j0, j1 = np.searchsorted(ys, [p[1] - r, p[1] + r])
+        k0, k1 = np.searchsorted(z, [p[2] - r, p[2] + r])
+        ball = ((xs[i0:i1, None, None] - p[0]) ** 2 + (ys[None, j0:j1, None] - p[1]) ** 2
+                + (z[None, None, k0:k1] - p[2]) ** 2) <= r ** 2
+        free[i0:i1, j0:j1, k0:k1] |= ball
+    g.occ[:] = ~free
+    g.box(0.8, 11.0, 0.2, 5.5, 21.0, 3.0, value=False)
+    g.shell()
+    lab, _ = ndimage.label(~g.occ)
+    keep = lab == lab[tuple((np.array([2.0, W / 2, 1.5]) / RES).astype(int))]
+    g.occ[~keep] = True
+    return g.occ, _starts(1.0, 12.0, 20.0, 1.5)
+
+
 def make(family, seed):
-    occ, starts = {"office": office, "warehouse": warehouse, "forest": forest, "tunnels": tunnels}[family](seed)
+    gen = {"office": office, "warehouse": warehouse, "forest": forest, "tunnels": tunnels,
+           "multistorey": multistorey, "atrium": atrium, "cave": cave}[family]
+    occ, starts = gen(seed)
     return World(family, seed, occ, RES, starts)

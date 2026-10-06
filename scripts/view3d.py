@@ -32,7 +32,7 @@ MAP_EVERY = 0.5
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("family", nargs="?", default="office", choices=worlds.FAMILIES)
+    ap.add_argument("family", nargs="?", default="office", choices=worlds.ALL_FAMILIES)
     ap.add_argument("seed", nargs="?", type=int, default=0)
     ap.add_argument("attack", nargs="?", default="none", choices=["none"] + list(ATTACKS))
     ap.add_argument("--defence", default="D0", choices=list(DEFENCES))

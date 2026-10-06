@@ -74,6 +74,7 @@ Map families, seeds 0-9 are the experiment maps:
 ```bash
 mjpython scripts/show_world3d.py warehouse 3      # N / P: next / previous seed, F: next family
 python3 scripts/show_worlds.py 0 9                # top views -> media/worlds_0-9.png
+python3 scripts/show_worlds.py --extra            # multi-storey, atrium, cave -> media/worlds_extra.png
 ```
 
 Experiments:
@@ -147,7 +148,44 @@ Defence switches are in the same `Params` (`audit_vouched`, `presence`, `trust_n
 `trust_by_type`, `verify_free`, `quarantine`, `attest_quorum`); D0-D4 in `scripts/run.py` are
 combinations of them. A new attack is a subclass of `_Sybil` (or `Attacker`) in
 `swarm/attacks.py` added to `ATTACKS`; for a Sybil variant, `_lengths` sets what each fake scan
-reports. A new world family is a function in `swarm/worlds.py` added to `FAMILIES` and `make`.
+reports. A new world family is a function in `swarm/worlds.py` added to `EXTRA_FAMILIES` and `make`.
+
+## More worlds
+
+Three more families need exploration in all three dimensions. They are not part of the results
+below yet.
+
+| family | |
+|---|---|
+| `multistorey` | three office floors (9.6 m) joined by two 2 m shafts through each slab |
+| `atrium` | three-level mall (10.8 m) with shops, balconies and an open central void |
+| `cave` | natural 3D cave (8 m) around a winding main passage |
+
+![More worlds](media/worlds_extra.png)
+
+Seeds 0-9 are the experiment maps and 100-104 are held out, as for the other families. Missions
+last 1200 s in `multistorey` and `atrium` and 600 s in `cave`.
+
+To run the study on them:
+
+```bash
+python3 scripts/show_worlds.py --extra                         # check the maps
+mjpython scripts/show_world3d.py multistorey 0                  # in 3D (F: next family)
+mjpython scripts/view3d.py atrium 0 sybil_strong --fakes 4 --defence D4
+
+python3 scripts/calibrate_trust.py --families multistorey atrium cave
+python3 scripts/run.py sybil --families multistorey --seeds 0 1 2 3 4 5 6 7 8 9
+python3 scripts/run.py sybil --families atrium --seeds 0 1 2 3 4 5 6 7 8 9
+python3 scripts/run.py sybil --families cave --seeds 0 1 2 3 4 5 6 7 8 9
+python3 scripts/tables.py --families multistorey atrium cave
+```
+
+The calibration runs honest teams on the held-out maps and prints the largest contradiction rate
+of an honest drone; it must stay below the 2% trust tolerance (`trust_tol`), otherwise the audit
+would accuse honest drones in these worlds. Each `run.py` command is one process with 36
+conditions per map (360 missions per family) and skips missions already on disk, so the three
+can run in parallel in separate terminals and be stopped and restarted. `tables.py` prints the
+same tables as below for the new families.
 
 ## Layout
 
@@ -158,7 +196,7 @@ reports. A new world family is a function in `swarm/worlds.py` added to `FAMILIE
 | `swarm/sim.py` | drones, radio, coordination, defences, metrics |
 | `swarm/attacks.py` | attackers |
 | `swarm/scene3d.py`, `swarm/viz.py` | 3D and top-down views |
-| `scripts/` | viewers, experiment runner, calibration, video |
+| `scripts/` | viewers, experiment runner, calibration, result tables, video |
 | `tests/` | unit and integration tests |
 
 ## Results

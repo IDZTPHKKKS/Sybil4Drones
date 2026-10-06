@@ -22,10 +22,10 @@ F = 2
 L, W = 48.0, 32.0
 
 
-def blocks(world):
+def blocks(world, f=F):
     occ = world.occ
-    nx, ny, nz = (s // F for s in occ.shape)
-    b = occ[:nx * F, :ny * F, :nz * F].reshape(nx, F, ny, F, nz, F).any(axis=(1, 3, 5))
+    nx, ny, nz = (s // f for s in occ.shape)
+    b = occ[:nx * f, :ny * f, :nz * f].reshape(nx, f, ny, f, nz, f).any(axis=(1, 3, 5))
     b[:, :, -1] = False  # ceiling
     b[:, :, 0] = False
     inner = ndimage.binary_erosion(b, border_value=1)
@@ -33,14 +33,17 @@ def blocks(world):
 
 
 def fill(scn, world):
-    cells, nz = blocks(world)
+    for f in range(F, 7):
+        cells, nz = blocks(world, f)
+        if len(cells) <= scn.maxgeom - 64:
+            break
     cmap = colormaps["viridis"]
-    half = np.full(3, 0.5 * F * world.res * 0.96)
+    half = np.full(3, 0.5 * f * world.res * 0.96)
     eye = np.eye(3).ravel()
     n = 0
     for c in cells[: scn.maxgeom - 64]:
         rgba = np.array(cmap(0.1 + 0.85 * (c[2] - 1) / max(nz - 2, 1)), np.float32)
-        mujoco.mjv_initGeom(scn.geoms[n], mujoco.mjtGeom.mjGEOM_BOX, half, (c + 0.5) * F * world.res, eye, rgba)
+        mujoco.mjv_initGeom(scn.geoms[n], mujoco.mjtGeom.mjGEOM_BOX, half, (c + 0.5) * f * world.res, eye, rgba)
         n += 1
     for p in world.starts[:16]:
         mujoco.mjv_initGeom(scn.geoms[n], mujoco.mjtGeom.mjGEOM_SPHERE, np.full(3, 0.15), p, eye,
@@ -53,7 +56,7 @@ def fill(scn, world):
 def main():
     fam = sys.argv[1] if len(sys.argv) > 1 else "office"
     seed = int(sys.argv[2]) if len(sys.argv) > 2 else 0
-    state = dict(fam=worlds.FAMILIES.index(fam), seed=seed, dirty=True)
+    state = dict(fam=worlds.ALL_FAMILIES.index(fam), seed=seed, dirty=True)
 
     def key(code):
         c = chr(code) if code < 256 else ""
@@ -62,7 +65,7 @@ def main():
         elif c in "Pp":
             state["seed"] = max(0, state["seed"] - 1)
         elif c in "Ff":
-            state["fam"] = (state["fam"] + 1) % len(worlds.FAMILIES)
+            state["fam"] = (state["fam"] + 1) % len(worlds.ALL_FAMILIES)
         else:
             return
         state["dirty"] = True
@@ -89,7 +92,7 @@ def main():
         while v.is_running():
             if state["dirty"]:
                 state["dirty"] = False
-                f = worlds.FAMILIES[state["fam"]]
+                f = worlds.ALL_FAMILIES[state["fam"]]
                 w = worlds.make(f, state["seed"])
                 with v.lock():
                     nb = fill(v.user_scn, w)

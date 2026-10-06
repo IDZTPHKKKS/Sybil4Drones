@@ -27,6 +27,7 @@ from swarm.attacks import ATTACKS  # noqa: E402
 from swarm.sim import Drone, Params, Sim  # noqa: E402
 
 SEEDS = range(10)
+T_MAX = dict(multistorey=1200.0, atrium=1200.0)
 
 
 VANILLA = dict(auth=False, defence="none")
@@ -117,9 +118,10 @@ def run_one(family, seed, overrides, spec, rep=0):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("exp")
-    ap.add_argument("--families", nargs="*", default=list(worlds.FAMILIES))
+    ap.add_argument("--families", nargs="*", default=list(worlds.FAMILIES), choices=worlds.ALL_FAMILIES)
     ap.add_argument("--seeds", nargs="*", type=int, default=list(SEEDS))
     ap.add_argument("--reps", type=int, default=1, help="runs per map with different noise seeds")
+    ap.add_argument("--t-max", type=float, default=None, help="mission length in s (default 600, 1200 for multistorey and atrium)")
     a = ap.parse_args()
     outdir = os.path.join(ROOT, "results", a.exp)
     os.makedirs(outdir, exist_ok=True)
@@ -132,7 +134,8 @@ def main():
                     if os.path.exists(path):
                         continue
                     t0 = time.time()
-                    r = run_one(family, seed, over, spec, rep)
+                    t_max = a.t_max or T_MAX.get(family, 600.0)
+                    r = run_one(family, seed, dict(over, t_max=t_max), spec, rep)
                     r["condition"] = name
                     r["wall"] = time.time() - t0
                     json.dump(r, open(path, "w"))

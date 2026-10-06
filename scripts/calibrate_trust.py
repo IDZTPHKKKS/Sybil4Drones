@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Calibrate the trust tolerance on held-out maps (seeds 100-104, never used in experiments).
 
-    python3 scripts/calibrate_trust.py      -> results/calibration.json
+    python3 scripts/calibrate_trust.py                                   -> results/calibration_camera.json
+    python3 scripts/calibrate_trust.py --families multistorey atrium cave -> results/calibration_camera_multistorey-atrium-cave.json
 """
 import json
 import os
@@ -18,6 +19,18 @@ from swarm.sim import Drone, Params, Sim  # noqa: E402
 SEEDS = range(100, 105)
 SENSOR = "lidar" if "--lidar" in sys.argv else "camera"
 CONF = Params().trust_conf
+T_MAX = dict(multistorey=1200.0, atrium=1200.0)
+
+
+def families():
+    if "--families" not in sys.argv:
+        return list(worlds.FAMILIES)
+    out = []
+    for x in sys.argv[sys.argv.index("--families") + 1:]:
+        if x.startswith("--"):
+            break
+        out.append(x)
+    return out
 
 
 def main():
@@ -40,9 +53,10 @@ def main():
         rec["absent"] = max(rec["absent"], int(self.absent[:self.sim.p.n_drones].max()))
 
     Drone.audit = audit
-    for f in worlds.FAMILIES:
+    fams = families()
+    for f in fams:
         for seed in SEEDS:
-            p = Params(seed=seed, t_max=600.0, auth=False, defence="audit", audit_vouched=True, presence=True,
+            p = Params(seed=seed, t_max=T_MAX.get(f, 600.0), auth=False, defence="audit", audit_vouched=True, presence=True,
                        trust_needs_body=True, trust_by_type=True, verify_free=True,
                        trust_conf=1.1, presence_conf=1.1, sensor=SENSOR)
             s = Sim(worlds.make(f, seed), p)
@@ -55,7 +69,8 @@ def main():
           f"{max(w['q_walls'] for w in worst):.4f}); most presence checks an honest drone failed: "
           f"{max(w['absent'] for w in worst)}")
     json.dump(dict(runs=worst, max_q=q, sensor=SENSOR),
-              open(os.path.join(ROOT, "results", f"calibration_{SENSOR}.json"), "w"), indent=1)
+              open(os.path.join(ROOT, "results", f"calibration_{SENSOR}" + ("" if fams == list(worlds.FAMILIES)
+                                                       else "_" + "-".join(fams)) + ".json"), "w"), indent=1)
 
 
 if __name__ == "__main__":
