@@ -36,6 +36,7 @@ frontier they are heading for so the others spread out.
 | `sybil_weak` | fake identities join at launch next to the attacker, fly openly, send careless scans |
 | `sybil_strong` | identities join one by one, send consistent scans, build trust by relaying real data under their names, and are replaced when revoked |
 | `sybil_stealth` | `sybil_strong`, but fake identities only claim positions no honest sensor can check |
+| `sybil_targeted` | `sybil_strong`, but fake identities go to the frontiers with the most unexplored space behind them (shafts, doorways), claim them and report a wall across the opening; not yet in the results below |
 | `fakewall`, `fakefree` | a drone reports walls or free space that do not exist under its own name |
 | `blackhole`, `greyhole` | a drone drops the map data it should relay |
 
@@ -165,6 +166,28 @@ below yet.
 
 Seeds 0-9 are the experiment maps and 100-104 are held out, as for the other families. Missions
 last 1200 s in `multistorey` and `atrium` and 600 s in `cave`.
+
+Strong attack with 4 fake identities and no defence, the team's map floor by floor (red: walls that
+do not exist):
+
+![Multi-storey building](media/multistorey_demo.gif)
+
+![Atrium](media/atrium_demo.gif)
+
+![Cave](media/cave_demo.gif)
+
+In this multi-storey building the team still sees 98% of each floor, but every floor's map carries
+fake walls: in large, well-connected buildings the attack mostly corrupts the map rather than
+leaving space unexplored. Full videos: [multi-storey](media/multistorey0_sybil_strong4_D0.mp4),
+[atrium](media/atrium0_sybil_strong4_D0.mp4), [cave](media/cave0_sybil_strong4_D0.mp4).
+
+Watch or record a mission, as the whole building (see-through floors) or floor by floor:
+
+```bash
+mjpython scripts/view_floors.py multistorey 0 D0 5              # world, seed, defence, speed
+mjpython scripts/view_floors.py atrium 0 D4 5 side
+python3 scripts/render_floors.py multistorey 0 D0 2 stacked     # video -> media/
+```
 
 To run the study on them:
 

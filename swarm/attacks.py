@@ -382,4 +382,74 @@ class SybilStealth(SybilStrong):
     hide = True
 
 
-ATTACKS.update(sybil_weak=SybilWeak, sybil_strong=SybilStrong, sybil_stealth=SybilStealth)
+class SybilTargeted(SybilStrong):
+    reach = 12
+    seal_at = 1.0
+
+    def _assign(self):
+        s = self.sim
+        shape = s.world.occ.shape
+        cstate, trav = K.planning_grid(self._believed(), shape, 2)
+        fr = K.frontiers(cstate, trav, np.zeros_like(trav))
+        cells = np.argwhere(fr)
+        if len(cells) == 0:
+            return
+        unk = np.pad((cstate == -1).astype(np.int32), ((1, 0), (1, 0), (1, 0))).cumsum(0).cumsum(1).cumsum(2)
+        r = self.reach
+        lo = np.maximum(cells - r, 0)
+        hi = np.minimum(cells + r + 1, np.array(trav.shape))
+        value = np.zeros(len(cells))
+        for sx in (0, 1):
+            for sy in (0, 1):
+                for sz in (0, 1):
+                    c = np.stack([hi[:, 0] if sx else lo[:, 0], hi[:, 1] if sy else lo[:, 1], hi[:, 2] if sz else lo[:, 2]], 1)
+                    value += (-1) ** (3 - sx - sy - sz) * unk[c[:, 0], c[:, 1], c[:, 2]]
+        cell_size = s.world.res * 2
+        tpos = cell_size * (cells + 0.5)
+        taken = [q for o, (q, t0) in self.claims.items() if o < SYBIL_BASE and s.t - t0 < s.p.claim_ttl]
+        for f in self.alive():
+            if f.wait > 0 or (f.path and f.target is not None):
+                if f.target is not None:
+                    taken.append(f.target)
+                continue
+            start = tuple(np.clip((f.pos / cell_size).astype(int), 0, np.array(trav.shape) - 1))
+            dist, parent = K.bfs(trav | (cstate == 0), np.array(start))
+            dist = dist.reshape(trav.shape)
+            d = dist[tuple(cells.T)]
+            ok = d >= 0
+            for q in taken:
+                ok &= np.linalg.norm(tpos - q, axis=1) > s.p.claim_radius
+            if not ok.any():
+                continue
+            k = int(np.argmax(np.where(ok, value - 0.5 * d, -np.inf)))
+            g = tuple(cells[k])
+            cy, cz = trav.shape[1], trav.shape[2]
+            u = (g[0] * cy + g[1]) * cz + g[2]
+            chain = []
+            while u >= 0:
+                chain.append((u // (cy * cz), (u // cz) % cy, u % cz))
+                u = parent[u]
+            f.path = [cell_size * (np.array(c) + 0.5) for c in chain[::-1]]
+            f.target = tpos[k]
+            box = cstate[max(g[0] - 3, 0):g[0] + 4, max(g[1] - 3, 0):g[1] + 4, max(g[2] - 3, 0):g[2] + 4]
+            unknown = np.argwhere(box == -1) + np.array([max(g[0] - 3, 0), max(g[1] - 3, 0), max(g[2] - 3, 0)])
+            v = (unknown.mean(0) - np.array(g)) if len(unknown) else np.array([1.0, 0.0, 0.0])
+            f.gate = (tpos[k], v / (np.linalg.norm(v) + 1e-9))
+            taken.append(f.target)
+
+    def _lengths(self, f, dirs):
+        L = super()._lengths(f, dirs)
+        gate = getattr(f, "gate", None)
+        if gate is None or np.linalg.norm(f.pos - gate[0]) > 1.5:
+            return L
+        q, n = gate[0] + self.seal_at * gate[1], gate[1]
+        cos = dirs @ n
+        with np.errstate(divide="ignore", invalid="ignore"):
+            t = ((q - f.pos) @ n) / cos
+        hit = (cos > 0.3) & (t > 0.3)
+        L[hit] = np.minimum(L[hit], t[hit])
+        return L
+
+
+ATTACKS.update(sybil_weak=SybilWeak, sybil_strong=SybilStrong, sybil_stealth=SybilStealth,
+               sybil_targeted=SybilTargeted)
