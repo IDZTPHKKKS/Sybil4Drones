@@ -57,6 +57,13 @@ def conditions(exp):
             for d in ("D0", "D3", "D4"):
                 out.append((f"{a}4-{d}", dict(DEFENCES[d], **L), (a, 1, dict(n_sybil=4))))
         return out
+    if exp == "storey":
+        spec = lambda a: (a, 1, dict(n_sybil=4))
+        return [("none-D0", D0, None), ("none-D4", D4, None),
+                ("sybil_strong4-D0", D0, spec("sybil_strong")),
+                ("sybil_targeted4-D0", D0, spec("sybil_targeted")),
+                ("sybil_targeted4-D3", D3, spec("sybil_targeted")),
+                ("sybil_targeted4-D4", D4, spec("sybil_targeted"))]
     if exp == "sybil":
         out = [(f"none-{d}", DEFENCES[d], None) for d in ("D0", "D3", "D4")]
         for a in ("sybil_weak", "sybil_strong", "sybil_stealth"):
