@@ -61,6 +61,8 @@ class Params:
     presence_detect: float = 0.9
     presence_conf: float = 0.99
     quarantine: bool = False
+    bind: bool = False
+    bind_stale: float = float("inf")
     attest_quorum: int = 2
     trust_needs_body: bool = False
     trust_by_type: bool = False
@@ -142,6 +144,7 @@ class Drone:
         self.seen = np.zeros(sim.n_ids, np.int64)
         self.absent = np.zeros(sim.n_ids, np.int64)
         self.attest_by = {}
+        self.bound = {}
         self.phys = np.zeros(sim.n_ids, np.bool_)
         self.phys[ident] = True
         self.pos = np.array(pos, float)
@@ -272,11 +275,14 @@ class Drone:
     def _presence_check(self):
         s = self.sim
         p = s.p
-        bodies = [d.pos for d in s.drones if not d.crashed and d is not self]
+        bodies = [(d.id, d.pos) for d in s.drones if not d.crashed and d is not self]
         used = set()
         fresh = [(o, q, s.t - t0) for o, (q, t0) in self.beacons.items()
                  if o != self.id and self.accept[o] and s.t - t0 <= 2 * p.dt]
-        fresh.sort(key=lambda x: np.linalg.norm(x[1] - self.pos))
+        if p.bind:
+            fresh.sort(key=lambda x: min([np.linalg.norm(bp - x[1]) for _, bp in bodies] or [np.inf]))
+        else:
+            fresh.sort(key=lambda x: np.linalg.norm(x[1] - self.pos))
         for o, q, age in fresh:
             if not s.in_view(self, q):
                 continue
@@ -284,13 +290,23 @@ class Drone:
                 continue
             tol = 0.4 + p.v_max * age
             match = None
-            for b, bp in enumerate(bodies):
-                if b not in used and np.linalg.norm(bp - q) <= tol:
-                    match = b
-                    break
+            best = tol
+            for b, bp in bodies:
+                d = np.linalg.norm(bp - q)
+                if b not in used and d <= best:
+                    match, best = b, d
+                    if not p.bind:
+                        break
+            if match is not None and p.bind:
+                owner = self.bound.get(match)
+                if owner is not None and owner[0] != o and self.accept[owner[0]] and s.t - owner[1] <= p.bind_stale:
+                    self.absent[o] += 1
+                    continue
             if match is not None and s.rng.random() < p.presence_detect:
                 used.add(match)
                 self.seen[o] += 1
+                if p.bind:
+                    self.bound[match] = (o, s.t)
             elif match is None:
                 self.absent[o] += 1
 

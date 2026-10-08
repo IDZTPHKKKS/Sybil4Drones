@@ -451,5 +451,25 @@ class SybilTargeted(SybilStrong):
         return L
 
 
+class SybilShadow(SybilTargeted):
+    offset = 0.3
+
+    def beacon(self):
+        out = [(self.id, self.pos.copy())]
+        if self.sim.p.auth:
+            return out
+        s = self.sim
+        hosts = sorted(o for o, (q, t0) in self.beacons.items()
+                       if o < SYBIL_BASE and o != self.id and s.t - t0 <= 2 * s.p.dt)
+        for k, f in enumerate(self.alive()):
+            if not hosts:
+                out.append((f.id, f.pos.copy()))
+                continue
+            q = self.beacons[hosts[k % len(hosts)]][0]
+            a = 2 * np.pi * k / max(len(self.alive()), 1)
+            out.append((f.id, q + self.offset * np.array([np.cos(a), np.sin(a), 0.0])))
+        return out
+
+
 ATTACKS.update(sybil_weak=SybilWeak, sybil_strong=SybilStrong, sybil_stealth=SybilStealth,
-               sybil_targeted=SybilTargeted)
+               sybil_targeted=SybilTargeted, sybil_shadow=SybilShadow)

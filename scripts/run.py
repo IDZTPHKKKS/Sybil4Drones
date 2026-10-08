@@ -2,6 +2,8 @@
 """Run an experiment over many maps; one JSON file per run, existing runs are skipped (resumable).
 
     python3 scripts/run.py sybil        # weak, strong and stealth Sybil attacks vs defence levels D0-D4
+    python3 scripts/run.py bind         # shadow attack (fakes next to real drones) and D5 (one body, one identity)
+    python3 scripts/run.py storey       # targeted attack in multi-floor worlds (use --families multistorey atrium cave)
     python3 scripts/run.py network      # packet dropping attackers (blackhole, greyhole), usual vs secure
     python3 scripts/run.py attacks      # one compromised drone of 8, every attack, vanilla vs secure
     python3 scripts/run.py stealth      # fake-wall injection rate vs damage and detection
@@ -38,9 +40,10 @@ D1 = dict(auth=False, defence="audit")
 D2 = dict(D1, audit_vouched=True, presence=True)
 D3 = dict(D2, trust_needs_body=True, trust_by_type=True, verify_free=True)
 D4 = dict(D3, quarantine=True)
+D5 = dict(D4, bind=True)
 S1 = dict(D1, auth=True)
 S3 = dict(D3, auth=True)
-DEFENCES = dict(D0=D0, D1=D1, D2=D2, D3=D3, D4=D4, S1=S1, S3=S3)
+DEFENCES = dict(D0=D0, D1=D1, D2=D2, D3=D3, D4=D4, D5=D5, S1=S1, S3=S3)
 
 
 def conditions(exp):
@@ -64,6 +67,12 @@ def conditions(exp):
                 ("sybil_targeted4-D0", D0, spec("sybil_targeted")),
                 ("sybil_targeted4-D3", D3, spec("sybil_targeted")),
                 ("sybil_targeted4-D4", D4, spec("sybil_targeted"))]
+    if exp == "bind":
+        spec = lambda a: (a, 1, dict(n_sybil=4))
+        out = [("none-D5", D5, None)]
+        out += [(f"sybil_shadow4-{d}", DEFENCES[d], spec("sybil_shadow")) for d in ("D0", "D3", "D4", "D5")]
+        out += [(f"{a}4-D5", D5, spec(a)) for a in ("sybil_strong", "sybil_stealth", "sybil_targeted")]
+        return out
     if exp == "sybil":
         out = [(f"none-{d}", DEFENCES[d], None) for d in ("D0", "D3", "D4")]
         for a in ("sybil_weak", "sybil_strong", "sybil_stealth"):
