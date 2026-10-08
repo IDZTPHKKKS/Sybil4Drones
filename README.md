@@ -36,7 +36,8 @@ frontier they are heading for so the others spread out.
 | `sybil_weak` | fake identities join at launch next to the attacker, fly openly, send careless scans |
 | `sybil_strong` | identities join one by one, send consistent scans, build trust by relaying real data under their names, and are replaced when revoked |
 | `sybil_stealth` | `sybil_strong`, but fake identities only claim positions no honest sensor can check |
-| `sybil_targeted` | `sybil_strong`, but fake identities go to the frontiers with the most unexplored space behind them (shafts, doorways), claim them and report a wall across the opening; not yet in the results below |
+| `sybil_targeted` | `sybil_strong`, but fake identities go to the frontiers with the most unexplored space behind them (shafts, doorways), claim them and report a wall across the opening |
+| `sybil_shadow` | `sybil_targeted`, but each fake reports a position right next to a real drone, so a presence check finds a body there |
 | `fakewall`, `fakefree` | a drone reports walls or free space that do not exist under its own name |
 | `blackhole`, `greyhole` | a drone drops the map data it should relay |
 
@@ -49,6 +50,7 @@ frontier they are heading for so the others spread out.
 | D2 | only vouched identities can corroborate a claim; presence check (is there a drone where an identity says it is?) |
 | D3 | trust requires being seen in person; wall claims judged separately; drones visit areas reported by identities they cannot vouch for |
 | D4 | quarantine: map data and claims are used only from identities seen in person or vouched for by two drones that were |
+| D5 | one body, one identity: each body a drone sees is bound to a single identity, other identities claiming it count as absent |
 | signed | message signatures: fake identities are impossible |
 
 ## Install
@@ -83,6 +85,8 @@ Experiments:
 ```bash
 python3 scripts/calibrate_trust.py                          # honest contradiction rates on held-out maps
 python3 scripts/run.py sybil --seeds 0 1 2 3 4 5 6 7 8 9    # one JSON per run in results/, resumable
+python3 scripts/run.py bind                                  # shadow attack and D5 on the 40 maps
+python3 scripts/run.py storey --families multistorey atrium cave   # targeted attack, multi-floor and cave worlds
 python3 scripts/render3d.py office 0 sybil_strong 4 D0 D3
 ```
 
@@ -95,7 +99,7 @@ mjpython scripts/view3d.py warehouse 2 sybil_strong --drones 12 --fakes 6 --defe
 ```
 
 `--drones` is the team size, `--fakes` the number of fake identities active at a time,
-`--defence` one of D0-D4, `--sensor` camera or lidar. The last drone of the team is the
+`--defence` one of D0-D5, `--sensor` camera or lidar. The last drone of the team is the
 compromised one.
 
 For batches, add an experiment to `conditions()` in `scripts/run.py`. Each condition is
@@ -146,7 +150,7 @@ attack):
 | `relabel` | 0.8 | share of relayed real data sent under fake names (strong, stealth) |
 
 Defence switches are in the same `Params` (`audit_vouched`, `presence`, `trust_needs_body`,
-`trust_by_type`, `verify_free`, `quarantine`, `attest_quorum`); D0-D4 in `scripts/run.py` are
+`trust_by_type`, `verify_free`, `quarantine`, `attest_quorum`, `bind`); D0-D5 in `scripts/run.py` are
 combinations of them. A new attack is a subclass of `_Sybil` (or `Attacker`) in
 `swarm/attacks.py` added to `ATTACKS`; for a Sybil variant, `_lengths` sets what each fake scan
 reports. A new world family is a function in `swarm/worlds.py` added to `EXTRA_FAMILIES` and `make`.
@@ -200,6 +204,7 @@ python3 scripts/calibrate_trust.py --families multistorey atrium cave
 python3 scripts/run.py sybil --families multistorey --seeds 0 1 2 3 4 5 6 7 8 9
 python3 scripts/run.py sybil --families atrium --seeds 0 1 2 3 4 5 6 7 8 9
 python3 scripts/run.py sybil --families cave --seeds 0 1 2 3 4 5 6 7 8 9
+python3 scripts/run.py storey --families multistorey atrium cave     # the runs in the table above
 python3 scripts/tables.py --families multistorey atrium cave
 ```
 
@@ -259,7 +264,34 @@ Time to 90% explored without an attacker: 134 s with no defence, 153 s with D3, 
 | strong | 90.3% / 18726 | 99.7% / 4776 | 99.9% / 3465 | 99.7% / 1816 | 99.7% / 61 |
 | stealth | 95.2% / 16234 | 99.8% / 3002 | 99.7% / 3686 | 99.8% / 1143 | 99.8% / 63 |
 
-Across all 1,440 runs, no honest drone was revoked. On the held-out maps, honest contradiction rates remained very low: at most 0.04% (0.43% for wall claims alone), against a 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
+Fakes parked next to real drones (`sybil_shadow`, 4 identities) and D5, 40 maps. Explored / false cells, and false cells in tunnels:
+
+| attack | defence | explored / false cells | tunnels |
+|---|---|---|---|
+| none | D5 | 99.7% / 58 | 119 |
+| shadow | none | 95.7% / 17098 | 139099 |
+| shadow | D3 | 99.8% / 1782 | 42671 |
+| shadow | D4 | 99.8% / 782 | 38528 |
+| shadow | D5 | 99.8% / 57 | 111 |
+| strong | D5 | 99.7% / 60 | 114 |
+| stealth | D5 | 99.7% / 60 | 111 |
+| targeted | D5 | 99.6% / 59 | 117 |
+
+Multi-storey, atrium and cave (10 maps each, 4 identities). Explored (mean, worst map) / false cells:
+
+| world | attack | none | D3 | D4 |
+|---|---|---|---|---|
+| multistorey | no attacker | 99.8% (99.1%) / 193 | | 99.8% (98.7%) / 178 |
+| multistorey | strong | 85.5% (34.4%) / 44592 | | |
+| multistorey | targeted | 82.3% (34.6%) / 72132 | 99.8% (99.0%) / 453 | 99.8% (98.8%) / 189 |
+| atrium | no attacker | 99.8% (99.5%) / 166 | | 99.8% (99.2%) / 169 |
+| atrium | strong | 94.1% (90.0%) / 45777 | | |
+| atrium | targeted | 93.1% (85.3%) / 52756 | 99.7% (99.1%) / 2346 | 99.8% (99.6%) / 163 |
+| cave | no attacker | 93.4% (70.0%) / 34 | | 93.4% (70.1%) / 38 |
+| cave | strong | 82.9% (11.7%) / 257063 | | |
+| cave | targeted | 86.5% (48.2%) / 347821 | 93.6% (70.2%) / 168751 | 93.4% (70.1%) / 45 |
+
+Across all 1,940 runs, no honest drone was revoked. On the held-out maps, honest contradiction rates remained very low: at most 0.04% (0.43% for wall claims alone), against a 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
 
 ## Contributing
 
