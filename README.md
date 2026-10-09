@@ -157,19 +157,28 @@ reports. A new world family is a function in `swarm/worlds.py` added to `EXTRA_F
 
 ## More worlds
 
-Three more families need exploration in all three dimensions. They are not part of the results
-below yet.
+Five more families need exploration in all three dimensions. The first three are in the results
+below; `metro` and `carpark` are new and have not been run yet.
 
 | family | |
 |---|---|
 | `multistorey` | three office floors (9.6 m) joined by two 2 m shafts through each slab |
 | `atrium` | three-level mall (10.8 m) with shops, balconies and an open central void |
 | `cave` | natural 3D cave (8 m) around a winding main passage |
+| `metro` | two-level metro station (10 m): ticket hall with a gate line above, two platforms and tracks below, joined only by four stairwells |
+| `carpark` | three-level car park (9 m) with pillars and parked cars, floors joined by one ramp each |
 
 ![More worlds](media/worlds_extra.png)
 
+![Metro station and car park](media/worlds_more.png)
+
 Seeds 0-9 are the experiment maps and 100-104 are held out, as for the other families. Missions
-last 1200 s in `multistorey` and `atrium` and 600 s in `cave`.
+last 1200 s in `multistorey`, `atrium`, `metro` and `carpark` and 600 s in `cave`. To run the
+targeted attack on the new ones:
+
+```
+python3 scripts/run.py storey --families metro carpark
+```
 
 Strong attack with 4 fake identities and no defence, the team's map floor by floor (red: walls that
 do not exist):
