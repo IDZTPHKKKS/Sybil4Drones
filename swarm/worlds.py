@@ -6,7 +6,7 @@ from scipy import ndimage
 
 RES = 0.2
 FAMILIES = ("office", "warehouse", "forest", "tunnels")
-EXTRA_FAMILIES = ("multistorey", "atrium", "cave")
+EXTRA_FAMILIES = ("multistorey", "atrium", "cave", "metro", "carpark")
 ALL_FAMILIES = FAMILIES + EXTRA_FAMILIES
 
 
@@ -351,8 +351,91 @@ def cave(seed):
     return g.occ, _starts(1.0, 12.0, 20.0, 1.5)
 
 
+def metro(seed):
+    rng = np.random.default_rng(seed)
+    L, W, H = 48.0, 32.0, 10.0
+    zs = 5.0
+    g = _Grid(L, W, H)
+    g.box(0, 0, zs, L, W, zs + 0.6)
+    g.box(0, 0, 0, L, 6.0, zs)
+    g.box(0, W - 6.0, 0, L, W, zs)
+    for y0, y1 in ((6.0, 10.0), (W - 10.0, W - 6.0)):
+        g.box(0, y0, 0, L, y1, 1.1)
+    g.box(0, 13.5, 0, L, 18.5, 0.3)
+    for x in np.arange(4.0, L - 2.0, 6.0):
+        for y in (8.0, W - 8.0):
+            g.box(x - 0.3, y - 0.3, 1.1, x + 0.3, y + 0.3, zs)
+            if rng.random() < 0.5:
+                g.box(x + 1.0, y - 0.3, 1.1, x + 2.8, y + 0.3, 1.6)
+    for x in np.arange(10.0, L - 4.0, rng.uniform(9.0, 12.0)):
+        g.box(x, 15.6, 0.3, x + 0.4, 16.4, zs)
+    holes = []
+    for x0 in sorted(rng.uniform(10.0, L - 10.0, 2)):
+        for y0, y1 in ((7.0, 9.6), (W - 9.6, W - 7.0)):
+            holes.append((x0, y0, x0 + 6.0, y1))
+    for x0, y0, x1, y1 in holes:
+        g.box(x0, y0, zs, x1, y1, zs + 0.6, value=False)
+        for k in range(10):
+            xa = x0 + 0.6 * k
+            g.box(xa, y0, 0, xa + 0.6, y0 + 0.9, 1.1 + 0.4 * k)
+        g.box(x0, y0, zs + 0.6, x1, y0 + 0.1, zs + 1.6)
+    z0 = zs + 0.6
+    gx = rng.uniform(16.0, 22.0)
+    for y in np.arange(4.0, W - 4.0, 1.6):
+        g.box(gx, y, z0, gx + 0.6, y + 0.9, z0 + 1.1)
+    g.box(26.0, 2.0, z0, 30.0, 5.0, z0 + 2.6)
+    g.box(36.0, W - 6.0, z0, 41.0, W - 2.0, z0 + 2.6)
+    for _ in range(rng.integers(4, 8)):
+        kx, ky = rng.uniform(24.0, L - 3.0), rng.uniform(6.0, W - 6.0)
+        g.box(kx, ky, z0, kx + rng.uniform(0.5, 1.5), ky + rng.uniform(0.5, 1.2), z0 + rng.uniform(0.8, 2.0))
+    for x0, y0, x1, y1 in holes:
+        g.box(x0 - 0.1, y0 - 0.1, z0, x1 + 0.1, y1 + 0.1, z0 + 0.2, value=False)
+    g.shell()
+    return g.occ, _starts(1.0, 12.0, 20.0, zs + 2.0)
+
+
+def carpark(seed, floors=3):
+    rng = np.random.default_rng(seed)
+    L, W, fh = 48.0, 32.0, 3.0
+    H = floors * fh
+    g = _Grid(L, W, H)
+    lr, rw = 14.0, 4.0
+    for f in range(1, floors):
+        z = f * fh
+        g.box(0, 0, z - 0.2, L, W, z)
+    for f in range(floors):
+        zl = f * fh
+        for x in np.arange(6.0, L - 2.0, 8.0):
+            for y in np.arange(6.0, W - 2.0, 8.0):
+                g.box(x - 0.3, y - 0.3, zl, x + 0.3, y + 0.3, zl + fh)
+        for row in (1.0, 13.0, 25.5):
+            x = 7.0
+            while x < L - 3.0:
+                if rng.random() < 0.7:
+                    g.box(x, row, zl, x + 2.0, row + 4.6, zl + 1.5)
+                x += 2.6
+        g.box(0, 0, zl, L, 0.2, zl + 1.1)
+        g.box(0, W - 0.2, zl, L, W, zl + 1.1)
+    for f in range(1, floors):
+        zl, zh = (f - 1) * fh, f * fh
+        y0 = 7.8 if f % 2 else W - 7.8 - rw
+        x0 = rng.uniform(16.0, L - lr - 3.0)
+        g.box(x0 - 0.5, y0, zl, x0 + lr + 0.5, y0 + rw, zh, value=False)
+        g.box(x0, y0, zh - 0.2, x0 + lr, y0 + rw, zh, value=False)
+        n = int(lr / 0.4)
+        for k in range(n):
+            xa = x0 + 0.4 * k if f % 2 else x0 + lr - 0.4 * (k + 1)
+            g.box(xa, y0, zl, xa + 0.4, y0 + rw, zl + (zh - zl - 0.4) * (k + 1) / n)
+        for x in np.arange(x0, x0 + lr, 4.0):
+            g.box(x, y0 - 0.1, zl, x + 0.2, y0, zl + 1.0)
+    g.box(0.8, 11.0, 0, 5.5, 21.0, fh - 0.2, value=False)
+    g.shell()
+    return g.occ, _starts(1.0, 12.0, 20.0, 1.5)
+
+
 def make(family, seed):
     gen = {"office": office, "warehouse": warehouse, "forest": forest, "tunnels": tunnels,
-           "multistorey": multistorey, "atrium": atrium, "cave": cave}[family]
+           "multistorey": multistorey, "atrium": atrium, "cave": cave,
+           "metro": metro, "carpark": carpark}[family]
     occ, starts = gen(seed)
     return World(family, seed, occ, RES, starts)

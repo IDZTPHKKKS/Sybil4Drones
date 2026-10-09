@@ -30,7 +30,7 @@ from swarm.attacks import ATTACKS  # noqa: E402
 from swarm.sim import Drone, Params, Sim  # noqa: E402
 
 SEEDS = range(10)
-T_MAX = dict(multistorey=1200.0, atrium=1200.0)
+T_MAX = dict(multistorey=1200.0, atrium=1200.0, metro=1200.0, carpark=1200.0)
 
 
 VANILLA = dict(auth=False, defence="none")
@@ -67,7 +67,8 @@ def conditions(exp):
                 ("sybil_strong4-D0", D0, spec("sybil_strong")),
                 ("sybil_targeted4-D0", D0, spec("sybil_targeted")),
                 ("sybil_targeted4-D3", D3, spec("sybil_targeted")),
-                ("sybil_targeted4-D4", D4, spec("sybil_targeted"))]
+                ("sybil_targeted4-D4", D4, spec("sybil_targeted")),
+                ("sybil_targeted4-D5", D5, spec("sybil_targeted"))]
     if exp == "teamsize":
         out = []
         for n in (4, 16):

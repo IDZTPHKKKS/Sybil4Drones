@@ -24,7 +24,7 @@ from swarm.sim import Drone, Params, Sim  # noqa: E402
 from swarm.viz import team_state  # noqa: E402
 
 F = 2
-FLOOR_H = dict(multistorey=3.2, atrium=3.6)
+FLOOR_H = dict(multistorey=3.2, atrium=3.6, metro=5.0, carpark=3.0)
 TEAM = [colormaps["tab10"](i)[:3] for i in (0, 2, 4, 6, 8, 9, 1, 5, 7, 3)]
 W_PX, H_PX = 1600, 600
 STACK_COLORS = [(0.20, 0.45, 0.85), (0.20, 0.70, 0.35), (0.95, 0.60, 0.15)]
