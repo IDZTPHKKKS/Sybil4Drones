@@ -3,6 +3,7 @@
 
     python3 scripts/run.py sybil        # weak, strong and stealth Sybil attacks vs defence levels D0-D4
     python3 scripts/run.py bind         # shadow attack (fakes next to real drones) and D5 (one body, one identity)
+    python3 scripts/run.py teamsize     # strong attacker with 4 and 16 drones, D0, D4 and D5
     python3 scripts/run.py storey       # targeted attack in multi-floor worlds (use --families multistorey atrium cave)
     python3 scripts/run.py network      # packet dropping attackers (blackhole, greyhole), usual vs secure
     python3 scripts/run.py attacks      # one compromised drone of 8, every attack, vanilla vs secure
@@ -67,6 +68,14 @@ def conditions(exp):
                 ("sybil_targeted4-D0", D0, spec("sybil_targeted")),
                 ("sybil_targeted4-D3", D3, spec("sybil_targeted")),
                 ("sybil_targeted4-D4", D4, spec("sybil_targeted"))]
+    if exp == "teamsize":
+        out = []
+        for n in (4, 16):
+            T = dict(n_drones=n)
+            out.append((f"n{n}-none-D0", dict(D0, **T), None))
+            out += [(f"n{n}-sybil_strong4-{d}", dict(DEFENCES[d], **T), ("sybil_strong", 1, dict(n_sybil=4)))
+                    for d in ("D0", "D4", "D5")]
+        return out
     if exp == "bind":
         spec = lambda a: (a, 1, dict(n_sybil=4))
         out = [("none-D5", D5, None)]

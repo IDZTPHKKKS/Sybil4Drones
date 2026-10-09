@@ -291,7 +291,15 @@ Multi-storey, atrium and cave (10 maps each, 4 identities). Explored (mean, wors
 | cave | strong | 82.9% (11.7%) / 257063 | | |
 | cave | targeted | 86.5% (48.2%) / 347821 | 93.6% (70.2%) / 168751 | 93.4% (70.1%) / 45 |
 
-Across all 1,940 runs, no honest drone was revoked. On the held-out maps, honest contradiction rates remained very low: at most 0.04% (0.43% for wall claims alone), against a 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
+Team size, strong attacker with 4 identities, explored / false cells:
+
+| drones | no attacker | strong | strong, D4 | strong, D5 |
+|---|---|---|---|---|
+| 4 | 99.7% / 48 | 86.0% / 20632 | 99.6% / 43 | 99.6% / 43 |
+| 8 | 99.8% / 62 | 90.3% / 18726 | 99.7% / 61 | 99.7% / 60 |
+| 16 | 99.8% / 65 | 98.6% / 12413 | 99.8% / 121 | 99.7% / 61 |
+
+Across all 2,260 runs, an honest drone was revoked by a teammate only twice, both in 16-drone teams and each time by a single drone (once by the D4 wall audit, once by a wrong D5 binding in a tunnel). On the held-out maps, honest contradiction rates remained very low: at most 0.04% (0.43% for wall claims alone), against a 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
 
 ## Contributing
 
