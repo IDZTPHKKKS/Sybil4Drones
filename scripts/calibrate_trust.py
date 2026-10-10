@@ -19,7 +19,7 @@ from swarm.sim import Drone, Params, Sim  # noqa: E402
 SEEDS = range(100, 105)
 SENSOR = "lidar" if "--lidar" in sys.argv else "camera"
 CONF = Params().trust_conf
-T_MAX = dict(multistorey=1200.0, atrium=1200.0, metro=1200.0, carpark=1200.0)
+T_MAX = dict(multistorey=1200.0, atrium=1200.0, metro=1200.0, carpark=1200.0, castle=1200.0)
 
 
 def families():

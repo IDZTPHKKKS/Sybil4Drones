@@ -157,8 +157,8 @@ reports. A new world family is a function in `swarm/worlds.py` added to `EXTRA_F
 
 ## More worlds
 
-Five more families need exploration in all three dimensions. The first three are in the results
-below; `metro` and `carpark` are new and have not been run yet.
+Six more families need exploration in all three dimensions. The first three are in the results
+below; `metro`, `carpark` and `castle` are new and have not been run yet.
 
 | family | |
 |---|---|
@@ -167,17 +167,20 @@ below; `metro` and `carpark` are new and have not been run yet.
 | `cave` | natural 3D cave (8 m) around a winding main passage |
 | `metro` | two-level metro station (10 m): ticket hall with a gate line above, two platforms and tracks below, joined only by four stairwells |
 | `carpark` | three-level car park (9 m) with pillars and parked cars, floors joined by one ramp each |
+| `castle` | castle wing (12 m): a double-height great hall with long tables and pillars, two levels of classrooms along a corridor, a round tower with a spiral staircase up to a tower room, and an open round tower |
 
 ![More worlds](media/worlds_extra.png)
 
 ![Metro station and car park](media/worlds_more.png)
 
+![Castle](media/castle.png)
+
 Seeds 0-9 are the experiment maps and 100-104 are held out, as for the other families. Missions
-last 1200 s in `multistorey`, `atrium`, `metro` and `carpark` and 600 s in `cave`. To run the
+last 1200 s in `multistorey`, `atrium`, `metro`, `carpark` and `castle` and 600 s in `cave`. To run the
 targeted attack on the new ones:
 
 ```
-python3 scripts/run.py storey --families metro carpark
+python3 scripts/run.py storey --families metro carpark castle
 ```
 
 Strong attack with 4 fake identities and no defence, the team's map floor by floor (red: walls that

@@ -6,7 +6,7 @@ from scipy import ndimage
 
 RES = 0.2
 FAMILIES = ("office", "warehouse", "forest", "tunnels")
-EXTRA_FAMILIES = ("multistorey", "atrium", "cave", "metro", "carpark")
+EXTRA_FAMILIES = ("multistorey", "atrium", "cave", "metro", "carpark", "castle")
 ALL_FAMILIES = FAMILIES + EXTRA_FAMILIES
 
 
@@ -433,9 +433,91 @@ def carpark(seed, floors=3):
     return g.occ, _starts(1.0, 12.0, 20.0, 1.5)
 
 
+def _ring(g, cx, cy, r_in, r_out, z0, z1, value=True):
+    nx, ny, _ = g.occ.shape
+    x = (np.arange(nx) + 0.5) * RES
+    y = (np.arange(ny) + 0.5) * RES
+    d = np.sqrt((x[:, None] - cx) ** 2 + (y[None, :] - cy) ** 2)
+    m = (d >= r_in) & (d < r_out)
+    k0, k1 = int(np.floor(z0 / RES)), int(np.ceil(z1 / RES))
+    g.occ[:, :, k0:k1][m] = value
+
+
+def castle(seed):
+    rng = np.random.default_rng(seed)
+    L, W, H, fh, t = 48.0, 32.0, 12.0, 4.0, 0.6
+    g = _Grid(L, W, H)
+    g.box(0, 0, 0, L, t, H), g.box(0, W - t, 0, L, W, H), g.box(0, 0, 0, t, W, H), g.box(L - t, 0, 0, L, W, H)
+    g.box(0, 0, 2 * fh, L, W, H)
+    g.box(6.0, 14.0, fh - 0.3, 40.0, W, fh)
+    g.box(6.0, 0, 0, 6.0 + t, 14.0 + t, 2 * fh)
+    g.box(6.0, 14.0, 0, 40.0, 14.0 + t, 2 * fh)
+    hx1 = 30.0 + rng.uniform(-2.0, 2.0)
+    g.box(hx1, 0, 0, hx1 + t, 14.0, 2 * fh)
+    dy = rng.uniform(5.0, 8.0)
+    g.box(6.0, dy, 0, 6.0 + t, dy + 2.4, 3.0, value=False)
+    g.box(hx1, 5.5, 0, hx1 + t, 7.9, 3.0, value=False)
+    for k in range(3):
+        y = 3.2 + k * 3.6
+        g.box(9.0, y, 0, hx1 - 3.0, y + 1.0, 0.8)
+        g.box(9.0, y - 0.6, 0, hx1 - 3.0, y - 0.3, 0.5)
+    for x in np.arange(9.0, hx1 - 1.0, rng.uniform(3.5, 4.5)):
+        for y in (1.6, 12.6):
+            g.box(x, y, 0, x + 0.5, y + 0.5, 2 * fh)
+    g.box(hx1 + 2.0, 6.0, 0, hx1 + 3.0, 8.0, 1.2)
+    for level in range(2):
+        z0 = level * fh
+        z1 = z0 + fh - 0.3
+        g.box(6.0 + t, 18.0, z0, 40.0, 18.0 + t, z1)
+        x = 6.0 + t
+        while x < 38.0:
+            x2 = min(x + rng.uniform(6.0, 8.0), 40.0)
+            g.box(x2, 18.0 + t, z0, x2 + t, W - t, z1)
+            dx = rng.uniform(x + 0.6, max(x + 0.7, x2 - 2.4))
+            g.box(dx, 18.0, z0, dx + 1.8, 18.0 + t, z0 + 2.6, value=False)
+            for r in range(rng.integers(2, 4)):
+                for c in range(rng.integers(1, 3)):
+                    sx = x + 1.2 + c * 2.4
+                    sy = 21.0 + r * 2.4
+                    if sx + 1.4 < x2 and sy + 0.7 < W - 1.0:
+                        g.box(sx, sy, z0, sx + 1.4, sy + 0.7, z0 + 0.75)
+            x = x2
+    g.box(6.0, 14.0 + t, 0, 6.0 + t, 18.0, fh - 0.3, value=False)
+    ax, ay, R = 44.0 + rng.uniform(-0.5, 0.5), 8.0 + rng.uniform(-1.0, 1.0), 3.4
+    _ring(g, ax, ay, 0.0, R, 2 * fh, H, value=False)
+    _ring(g, ax, ay, R, R + t, 0, H)
+    _ring(g, ax, ay, 0.0, 0.7, 0, 2 * fh + 0.5)
+    g.box(40.0, ay - 1.2, 0, 41.2, ay + 1.2, 3.0, value=False)
+    g.box(hx1 + t, ay - 1.2, 0, 40.0, ay + 1.2, 3.0, value=False)
+    g.box(hx1 + t, ay - 1.8, 0, 40.0, ay - 1.2, 3.6)
+    g.box(hx1 + t, ay + 1.2, 0, 40.0, ay + 1.8, 3.6)
+    nx, ny, _ = g.occ.shape
+    xs = (np.arange(nx) + 0.5) * RES
+    ys = (np.arange(ny) + 0.5) * RES
+    ang = np.arctan2(ys[None, :] - ay, xs[:, None] - ax) % (2 * np.pi)
+    dist = np.sqrt((xs[:, None] - ax) ** 2 + (ys[None, :] - ay) ** 2)
+    ann = (dist >= 0.7) & (dist < R)
+    turns, rise = 2.0, 2 * fh
+    for k in range(int(turns * 24)):
+        a0 = (k % 24) * 2 * np.pi / 24
+        zt = rise * (k + 1) / (turns * 24)
+        m = ann & (ang >= a0) & (ang < a0 + 2 * np.pi / 24)
+        k0, k1 = max(int(np.floor((zt - 0.35) / RES)), 0), int(np.ceil(zt / RES))
+        g.occ[:, :, k0:k1][m] = True
+    bx, by, Rb = 44.0 + rng.uniform(-0.5, 0.5), 25.0 + rng.uniform(-1.0, 1.0), 3.0
+    _ring(g, bx, by, 0.0, Rb, 0, H, value=False)
+    _ring(g, bx, by, Rb, Rb + t, 0, H)
+    for z0 in (0.0, fh):
+        g.box(40.0, 18.0 + t, z0, 41.0, 20.6, z0 + 2.8, value=False)
+        g.box(40.0, 18.0 + t, z0, bx - Rb + 0.2, 20.6, z0 + 2.8, value=False)
+    g.box(0.8, 11.0, 0, 5.5, 21.0, fh - 0.4, value=False)
+    g.shell()
+    return g.occ, _starts(1.0, 12.0, 20.0, 1.5)
+
+
 def make(family, seed):
     gen = {"office": office, "warehouse": warehouse, "forest": forest, "tunnels": tunnels,
            "multistorey": multistorey, "atrium": atrium, "cave": cave,
-           "metro": metro, "carpark": carpark}[family]
+           "metro": metro, "carpark": carpark, "castle": castle}[family]
     occ, starts = gen(seed)
     return World(family, seed, occ, RES, starts)
