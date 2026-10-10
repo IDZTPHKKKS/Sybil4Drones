@@ -445,75 +445,116 @@ def _ring(g, cx, cy, r_in, r_out, z0, z1, value=True):
 
 def castle(seed):
     rng = np.random.default_rng(seed)
-    L, W, H, fh, t = 48.0, 32.0, 12.0, 4.0, 0.6
+    L, W, H = 48.0, 32.0, 16.0
     g = _Grid(L, W, H)
-    g.box(0, 0, 0, L, t, H), g.box(0, W - t, 0, L, W, H), g.box(0, 0, 0, t, W, H), g.box(L - t, 0, 0, L, W, H)
-    g.box(0, 0, 2 * fh, L, W, H)
-    g.box(6.0, 14.0, fh - 0.3, 40.0, W, fh)
-    g.box(6.0, 0, 0, 6.0 + t, 14.0 + t, 2 * fh)
-    g.box(6.0, 14.0, 0, 40.0, 14.0 + t, 2 * fh)
-    hx1 = 30.0 + rng.uniform(-2.0, 2.0)
-    g.box(hx1, 0, 0, hx1 + t, 14.0, 2 * fh)
-    dy = rng.uniform(5.0, 8.0)
-    g.box(6.0, dy, 0, 6.0 + t, dy + 2.4, 3.0, value=False)
-    g.box(hx1, 5.5, 0, hx1 + t, 7.9, 3.0, value=False)
-    for k in range(3):
-        y = 3.2 + k * 3.6
-        g.box(9.0, y, 0, hx1 - 3.0, y + 1.0, 0.8)
-        g.box(9.0, y - 0.6, 0, hx1 - 3.0, y - 0.3, 0.5)
-    for x in np.arange(9.0, hx1 - 1.0, rng.uniform(3.5, 4.5)):
-        for y in (1.6, 12.6):
-            g.box(x, y, 0, x + 0.5, y + 0.5, 2 * fh)
-    g.box(hx1 + 2.0, 6.0, 0, hx1 + 3.0, 8.0, 1.2)
-    for level in range(2):
-        z0 = level * fh
-        z1 = z0 + fh - 0.3
-        g.box(6.0 + t, 18.0, z0, 40.0, 18.0 + t, z1)
-        x = 6.0 + t
-        while x < 38.0:
-            x2 = min(x + rng.uniform(6.0, 8.0), 40.0)
-            g.box(x2, 18.0 + t, z0, x2 + t, W - t, z1)
-            dx = rng.uniform(x + 0.6, max(x + 0.7, x2 - 2.4))
-            g.box(dx, 18.0, z0, dx + 1.8, 18.0 + t, z0 + 2.6, value=False)
-            for r in range(rng.integers(2, 4)):
-                for c in range(rng.integers(1, 3)):
-                    sx = x + 1.2 + c * 2.4
-                    sy = 21.0 + r * 2.4
-                    if sx + 1.4 < x2 and sy + 0.7 < W - 1.0:
-                        g.box(sx, sy, z0, sx + 1.4, sy + 0.7, z0 + 0.75)
-            x = x2
-    g.box(6.0, 14.0 + t, 0, 6.0 + t, 18.0, fh - 0.3, value=False)
-    ax, ay, R = 44.0 + rng.uniform(-0.5, 0.5), 8.0 + rng.uniform(-1.0, 1.0), 3.4
-    _ring(g, ax, ay, 0.0, R, 2 * fh, H, value=False)
-    _ring(g, ax, ay, R, R + t, 0, H)
-    _ring(g, ax, ay, 0.0, 0.7, 0, 2 * fh + 0.5)
-    g.box(40.0, ay - 1.2, 0, 41.2, ay + 1.2, 3.0, value=False)
-    g.box(hx1 + t, ay - 1.2, 0, 40.0, ay + 1.2, 3.0, value=False)
-    g.box(hx1 + t, ay - 1.8, 0, 40.0, ay - 1.2, 3.6)
-    g.box(hx1 + t, ay + 1.2, 0, 40.0, ay + 1.8, 3.6)
-    nx, ny, _ = g.occ.shape
+    nx, ny, nz = g.occ.shape
     xs = (np.arange(nx) + 0.5) * RES
     ys = (np.arange(ny) + 0.5) * RES
-    ang = np.arctan2(ys[None, :] - ay, xs[:, None] - ax) % (2 * np.pi)
-    dist = np.sqrt((xs[:, None] - ax) ** 2 + (ys[None, :] - ay) ** 2)
-    ann = (dist >= 0.7) & (dist < R)
-    turns, rise = 2.0, 2 * fh
-    for k in range(int(turns * 24)):
-        a0 = (k % 24) * 2 * np.pi / 24
-        zt = rise * (k + 1) / (turns * 24)
-        m = ann & (ang >= a0) & (ang < a0 + 2 * np.pi / 24)
-        k0, k1 = max(int(np.floor((zt - 0.35) / RES)), 0), int(np.ceil(zt / RES))
-        g.occ[:, :, k0:k1][m] = True
-    bx, by, Rb = 44.0 + rng.uniform(-0.5, 0.5), 25.0 + rng.uniform(-1.0, 1.0), 3.0
-    _ring(g, bx, by, 0.0, Rb, 0, H, value=False)
-    _ring(g, bx, by, Rb, Rb + t, 0, H)
-    for z0 in (0.0, fh):
-        g.box(40.0, 18.0 + t, z0, 41.0, 20.6, z0 + 2.8, value=False)
-        g.box(40.0, 18.0 + t, z0, bx - Rb + 0.2, 20.6, z0 + 2.8, value=False)
-    g.box(0.8, 11.0, 0, 5.5, 21.0, fh - 0.4, value=False)
-    g.shell()
-    return g.occ, _starts(1.0, 12.0, 20.0, 1.5)
 
+    def disc(cx, cy, r):
+        return (xs[:, None] - cx) ** 2 + (ys[None, :] - cy) ** 2 < r ** 2
+
+    def fill(mask, z0, z1, value=True):
+        g.occ[:, :, int(round(z0 / RES)):int(round(z1 / RES))][mask] = value
+
+    def crenels(x0, y0, x1, y1, z, along_x):
+        span = x1 - x0 if along_x else y1 - y0
+        for k in np.arange(0.0, span - 0.5, 2.0):
+            if along_x:
+                g.box(x0 + k, y0, z, x0 + k + 1.0, y1, z + 1.0)
+            else:
+                g.box(x0, y0 + k, z, x1, y0 + k + 1.0, z + 1.0)
+
+    wall_h, t = 9.0, 1.0
+    g.box(0, 0, 0, L, t, wall_h), g.box(0, W - t, 0, L, W, wall_h)
+    g.box(0, 0, 0, t, W, wall_h), g.box(L - t, 0, 0, L, W, wall_h)
+    crenels(4, 0, L - 4, t, wall_h, True), crenels(4, W - t, L - 4, W, wall_h, True)
+    crenels(0, 4, t, W - 4, wall_h, False), crenels(L - t, 4, L, W - 4, wall_h, False)
+
+    towers = [(4.0, 4.0), (L - 4.0, 4.0), (4.0, W - 4.0), (L - 4.0, W - 4.0)]
+    R, tw, th = 3.8, 0.8, 12.5
+    for cx, cy in towers:
+        fill(disc(cx, cy, R) & ~disc(cx, cy, R - tw), 0, th)
+        fill(disc(cx, cy, R) & ~disc(cx, cy, R - tw), th, th + 1.0)
+        ring = disc(cx, cy, R + 0.01) & ~disc(cx, cy, R - tw)
+        ang = np.arctan2(ys[None, :] - cy, xs[:, None] - cx)
+        fill(ring & (np.floor((ang + np.pi) / (np.pi / 8)) % 2 == 1), th + 1.0, th + 1.0)
+        fill(ring & (np.floor((ang + np.pi) / (np.pi / 8)) % 2 == 0), th, th + 1.0, value=False)
+        fill(ring & (np.floor((ang + np.pi) / (np.pi / 8)) % 2 == 0), th, th + 0.0)
+        for k, z in enumerate(np.arange(th + 0.6, H - 0.2, 0.4)):
+            r = R + 0.4 - (k + 1) * (R + 0.4) / ((H - th) / 0.4)
+            fill(disc(cx, cy, max(r, 0.3)), z, z + 0.4)
+        for zf in (4.5, 9.0):
+            fill(disc(cx, cy, R - tw) & ~(np.abs(xs[:, None] - cx) < 0.9) & np.ones_like(disc(cx, cy, 1), bool), zf - 0.3, zf)
+        dxs, dys = np.sign(L / 2 - cx), np.sign(W / 2 - cy)
+        px, py = cx + dxs * (R - 0.4), cy + dys * (R - 0.4)
+        g.box(px - 1.0, py - 1.0, 0, px + 1.0, py + 1.0, 3.2, value=False)
+
+    sx, sy = towers[3]
+    ann = disc(sx, sy, R - tw) & ~disc(sx, sy, 0.7)
+    ang = np.arctan2(ys[None, :] - sy, xs[:, None] - sx) % (2 * np.pi)
+    for k in range(48):
+        a0 = (k % 24) * 2 * np.pi / 24
+        zt = 9.0 * (k + 1) / 48
+        fill(ann & (ang >= a0) & (ang < a0 + 2 * np.pi / 24), max(zt - 0.4, 0), zt)
+    fill(disc(sx, sy, 0.7), 0, 9.5)
+    for zf in (4.5, 9.0):
+        fill(disc(sx, sy, R - tw), zf - 0.3, zf, value=False)
+
+    g.box(0, 11.0, 0, 6.0, 21.0, 11.0)
+    for cy in (11.0, 21.0):
+        fill(disc(3.0, cy, 2.2), 0, 12.0)
+        ang = np.arctan2(ys[None, :] - cy, xs[:, None] - 3.0)
+        fill(disc(3.0, cy, 2.2) & ~disc(3.0, cy, 1.6) & (np.floor((ang + np.pi) / (np.pi / 6)) % 2 == 0), 12.0, 13.0)
+    crenels(0, 13.0, 6.0, 19.0, 11.0, False)
+    g.box(0.6, 14.0, 0, 6.0, 18.0, 4.0, value=False)
+    for k in range(10):
+        a = np.pi * k / 9
+        zc, half = 4.0 + 2.0 * np.sin(a) * 0.5, 2.0 * np.cos(a)
+        g.box(0.6, 16.0 - abs(half), 4.0, 6.0, 16.0 + abs(half), 4.0 + 1.0 * np.sin(a) + 0.2, value=False)
+
+    hy0, hy1, hx0, hx1 = 20.0, W - t, 10.0, 38.0
+    g.box(hx0, hy0, 0, hx1, hy0 + 0.8, 8.0), g.box(hx0, hy0, 0, hx0 + 0.8, hy1, 8.0), g.box(hx1 - 0.8, hy0, 0, hx1, hy1, 8.0)
+    ridge = (hy0 + hy1) / 2
+    for k, z in enumerate(np.arange(8.0, 12.0, 0.4)):
+        half = (hy1 - hy0) / 2 + 0.6 - k * ((hy1 - hy0) / 2 + 0.6) / 10
+        g.box(hx0 - 0.4, ridge - half, z, hx1 + 0.4, ridge + half, z + 0.4)
+        g.box(hx0 + 0.8, ridge - half + 0.6, z, hx1 - 0.8, ridge + half - 0.6, z + 0.4, value=False)
+    g.box(22.5, hy0, 0, 25.5, hy0 + 0.8, 3.6, value=False)
+    for x in np.arange(hx0 + 3.0, hx1 - 2.0, 4.0):
+        if abs(x - 24.0) > 2.5:
+            g.box(x, hy0, 2.5, x + 0.8, hy0 + 0.8, 6.0, value=False)
+    for k in range(2):
+        y = 23.0 + k * 4.0
+        g.box(hx0 + 3.0, y, 0, hx1 - 6.0, y + 1.0, 0.8)
+        g.box(hx0 + 3.0, y - 0.6, 0, hx1 - 6.0, y - 0.3, 0.5)
+    g.box(hx1 - 4.5, hy0 + 2.0, 0, hx1 - 0.8, hy1, 0.5)
+    g.box(hx1 - 3.5, 24.0, 0.5, hx1 - 2.0, 27.0, 1.3)
+    for x in np.arange(hx0 + 2.5, hx1 - 5.0, rng.uniform(4.0, 5.0)):
+        for y in (hy0 + 1.6, hy1 - 1.6):
+            g.box(x, y, 0, x + 0.5, y + 0.5, 8.0)
+
+    ry0, ry1, rx0, rx1, fh = t, 10.0, 9.0, 39.0, 4.0
+    g.box(rx0, ry1 - 0.6, 0, rx1, ry1, 8.0), g.box(rx0, ry0, 0, rx0 + 0.6, ry1, 8.0), g.box(rx1 - 0.6, ry0, 0, rx1, ry1, 8.0)
+    g.box(rx0, ry0, fh - 0.3, rx1, ry1, fh), g.box(rx0, ry0, 8.0 - 0.3, rx1, ry1, 8.0)
+    crenels(rx0, ry1 - 0.6, rx1, ry1, 8.0, True)
+    x = rx0 + 0.6
+    while x < rx1 - 3.0:
+        x2 = min(x + rng.uniform(5.0, 7.0), rx1 - 0.6)
+        for z0 in (0.0, fh):
+            g.box(x2, ry0, z0, x2 + 0.6, ry1, z0 + fh - 0.3)
+            dx = rng.uniform(x + 0.5, max(x + 0.6, x2 - 2.2))
+            g.box(dx, ry1 - 0.6, z0, dx + 1.6, ry1, z0 + 2.6, value=False) if z0 == 0 else None
+            g.box(x2, ry0 + 3.5, z0, x2 + 0.6, ry0 + 5.5, z0 + 2.6, value=False)
+            g.box(x + 0.8, ry0 + 1.0, z0, x + 2.2, ry0 + 1.8, z0 + 0.8)
+        x = x2
+    g.box(rx1 - 3.0, ry1 - 3.4, fh - 0.3, rx1 - 0.8, ry1 - 0.8, fh, value=False)
+
+    fill(disc(24.0, 15.0, 1.1) & ~disc(24.0, 15.0, 0.7), 0, 1.0)
+    g.box(30.0, 12.0, 0, 32.4, 13.4, 1.2)
+    g.box(14.0, 16.5, 0, 14.4, 16.9, 1.8)
+    g.shell()
+    return g.occ, _starts(1.0, 14.4, 17.6, 1.5)
 
 def make(family, seed):
     gen = {"office": office, "warehouse": warehouse, "forest": forest, "tunnels": tunnels,

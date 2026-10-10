@@ -167,7 +167,7 @@ below; `metro`, `carpark` and `castle` are new and have not been run yet.
 | `cave` | natural 3D cave (8 m) around a winding main passage |
 | `metro` | two-level metro station (10 m): ticket hall with a gate line above, two platforms and tracks below, joined only by four stairwells |
 | `carpark` | three-level car park (9 m) with pillars and parked cars, floors joined by one ramp each |
-| `castle` | castle wing (12 m): a double-height great hall with long tables and pillars, two levels of classrooms along a corridor, a round tower with a spiral staircase up to a tower room, and an open round tower |
+| `castle` | castle (16 m): curtain walls with battlements, four round corner towers with cone roofs (one with a spiral staircase), a gatehouse with an arched passage where the drones start, a courtyard, a great hall with a pitched roof, long tables and pillars, and a two-storey range of rooms |
 
 ![More worlds](media/worlds_extra.png)
 
