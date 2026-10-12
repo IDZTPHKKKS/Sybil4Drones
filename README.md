@@ -238,6 +238,7 @@ same tables as below for the new families.
 | `swarm/scene3d.py`, `swarm/viz.py` | 3D and top-down views |
 | `scripts/` | viewers, experiment runner, calibration, result tables, video |
 | `tests/` | unit and integration tests |
+| `ros2/` | the defences as ROS 2 nodes, replay of recorded missions, live view |
 
 ## Results
 
@@ -311,7 +312,40 @@ Team size, strong attacker with 4 identities, explored / false cells:
 | 8 | 99.8% / 62 | 90.3% / 18726 | 99.7% / 61 | 99.7% / 60 |
 | 16 | 99.8% / 65 | 98.6% / 12413 | 99.8% / 121 | 99.7% / 61 |
 
-Across all 2,260 runs, an honest drone was revoked by a teammate only twice, both in 16-drone teams and each time by a single drone (once by the D4 wall audit, once by a wrong D5 binding in a tunnel). On the held-out maps, honest contradiction rates remained very low: at most 0.04% (0.43% for wall claims alone), against a 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
+Across all 2,290 runs, an honest drone was revoked by a teammate only twice, both in 16-drone teams and each time by a single drone (once by the D4 wall audit, once by a wrong D5 binding in a tunnel). On the held-out maps, honest contradiction rates remained very low: at most 0.04% (0.43% for wall claims alone), against a 2% threshold. Note that D4 cannot stop two colluding drones from vouching for each other’s fake identities for now.
+
+## ROS 2
+
+The defences D1 to D5 also run as ROS 2 (Jazzy) nodes in Docker, one trust node per drone, with
+standard messages (`nav_msgs/Odometry`, `vision_msgs/Detection3DArray`, `sensor_msgs/PointCloud2`)
+and a few for radio traffic. Missions from the simulator are recorded, converted to rosbag2 and played
+through the nodes, which must take exactly the same decisions as the simulator. Setup, topics and the
+inputs that still come from the simulator are in [`ros2/README.md`](ros2/README.md).
+
+| mission | defence | trust decisions | revocations | same as simulator |
+|---|---|---|---|---|
+| office 0, weak, 4 identities | D1 | 2772 | 28 | yes |
+| warehouse 0, strong, 4 identities | D2 | 4193 | 45 | yes |
+| forest 0, stealth, 4 identities | D3 | 4193 | 54 | yes |
+| tunnels 0, strong, 4 identities | D4 | 2114 | 2 | yes |
+| office 0, two colluding drones | D4 | 3246 | 68 | yes |
+| office 0, shadow, 4 identities | D5 | 3248 | 15 | yes |
+| tunnels 3, targeted, 4 identities | D5 | 3710 | 3 | yes |
+| office 0, no attacker | D5 | 1840 | 0 | yes |
+
+Each mission is also rendered as a top view of one drone's map, its teammates and every fake
+identity coloured by that drone's verdict (trusted, quarantined, revoked):
+
+| video | |
+|---|---|
+| [`office0_shadow4_D5.mp4`](media/ros2/office0_shadow4_D5.mp4) | fakes next to real drones, D5 |
+| [`office0_collusion_D4.mp4`](media/ros2/office0_collusion_D4.mp4) | two colluding drones, D4 |
+| [`tunnels3_targeted4_D5.mp4`](media/ros2/tunnels3_targeted4_D5.mp4) | floor and doorway sealing, D5 |
+| [`tunnels0_strong4_D4.mp4`](media/ros2/tunnels0_strong4_D4.mp4) | strong attacker in tunnels, D4 |
+| [`warehouse0_strong4_D2.mp4`](media/ros2/warehouse0_strong4_D2.mp4) | strong attacker in a warehouse, D2 |
+| [`forest0_stealth4_D3.mp4`](media/ros2/forest0_stealth4_D3.mp4) | stealth attacker in a forest, D3 |
+| [`office0_weak4_D1.mp4`](media/ros2/office0_weak4_D1.mp4) | weak attacker, D1 |
+| [`office0_none_D5.mp4`](media/ros2/office0_none_D5.mp4) | no attacker, D5 |
 
 ## Contributing
 

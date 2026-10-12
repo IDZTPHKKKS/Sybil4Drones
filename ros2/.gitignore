@@ -1,0 +1,7 @@
+data/
+ws/build/
+ws/install/
+ws/log/
+__pycache__/
+.pytest_cache/
+.DS_Store
