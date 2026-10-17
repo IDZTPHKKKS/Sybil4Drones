@@ -37,3 +37,21 @@ with no defence, D4 and D5. The kinematic runs of the same maps are in `results/
 
 The state is known exactly, collisions are checked once per step, and there is no downwash or
 wind.
+
+## Results
+
+12 maps (seeds 0-2 of each family), kinematic / physics:
+
+| condition | explored % | false cells (median) | crashed drones | honest drones expelled |
+|---|---|---|---|---|
+| no attacker, no defence | 99.7 / 100.0 | 63 / 67 | 0 / 1 | 0 / 0 |
+| no attacker, D4 | 99.7 / 99.7 | 59 / 61 | 0 / 4 | 0 / 0 |
+| strong, no defence | 80.6 / 93.1 | 16549 / 21691 | 0 / 1 | 0 / 0 |
+| strong, D4 | 99.6 / 100.0 | 63 / 65 | 0 / 1 | 0 / 0 |
+| strong, D5 | 99.7 / 100.0 | 62 / 60 | 0 / 1 | 0 / 0 |
+
+Median tracking error 0.7 cm per step, at most 9.9 cm; maximum tilt 34 degrees. With D4 and D5
+the results match the kinematic runs. Without a defence the damage varies a lot from map to map
+in both cases (office 1: 30% explored kinematic, 94% physics; office 0: 72% and 60%).
+8 drones crashed in 6 of the 60 physics missions, 4 of them in one tunnels mission, after
+overshooting by 6-8 cm in narrow passages; the guidance brakes for a drone that reacts at once.
